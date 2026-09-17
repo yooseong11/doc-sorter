@@ -13,5 +13,6 @@
 | [0007](0007-supported-formats.md) | 읽을 수 있는 파일 형식 | 채택 |
 | [0008](0008-privacy-text-only.md) | 서버로는 앞부분 텍스트만 보낸다 | 채택 |
 | [0009](0009-tech-stack.md) | 기술 스택 | 채택 |
+| [0010](0010-design-tokens.md) | 전역 디자인 토큰(CSS 변수) | 채택 |
 
 새 ADR은 [0000-template.md](0000-template.md)를 복사해서 쓴다.
