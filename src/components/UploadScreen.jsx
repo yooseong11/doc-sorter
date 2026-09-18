@@ -2,12 +2,12 @@ import { useRef } from 'react'
 import FileRow from './FileRow'
 import { createDocument } from '../lib/documents'
 import { prepareDocument } from '../lib/documentFlow'
+import { supportsDirectoryPicker } from '../lib/directory'
 import './UploadScreen.css'
 
 // 폴더 선택 API가 없으면 첫 화면에서 막는다. (ADR 0012)
 // 브라우저 이름이 아니라 기능이 있는지로 판단한다.
-const CAN_PICK_DIRECTORY =
-  typeof window !== 'undefined' && 'showDirectoryPicker' in window
+const CAN_PICK_DIRECTORY = supportsDirectoryPicker()
 
 const ACCEPT = '.pdf,.docx,.hwpx,.hwp,.doc'
 

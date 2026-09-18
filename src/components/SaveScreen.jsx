@@ -1,114 +1,108 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import SaveRow from './SaveRow'
 import { GROUP_ORDER, UNCLASSIFIED } from '../lib/categories'
-import { logFileName, savePath, withSuffix } from '../lib/savePath'
+import { logFileName } from '../lib/savePath'
+import { planSaves } from '../lib/savePlan'
+import { saveAll } from '../lib/saveFiles'
+import {
+  ensurePermission,
+  folderLabel,
+  pickRootDirectory,
+  recallDirectory,
+  rememberDirectory,
+} from '../lib/directory'
 import './SaveScreen.css'
 
 // S3 저장 화면 — 최상위 폴더를 고르고 카테고리 폴더에 넣은 뒤 기록표를 남긴다.
 // 성공분은 되돌리지 않고 실패분만 다시 시도한다. (ADR 0011)
 // 미분류도 예외 없이 `미분류` 폴더에 넣는다. (ADR 0014)
 
-// 단독 화면 확인용 기본 예시. App에서는 실제 목록을 전달한다.
-const DEMO_ITEMS = [
-  { id: 'demo-1', name: '전자세금계산서_9월.pdf', size: 182000, category: '비용 증빙' },
-  { id: 'demo-2', name: '출장정산_영수증.pdf', size: 96000, category: '비용 증빙', conflict: true },
-  { id: 'demo-3', name: '2026-09-01_연차신청서.pdf', size: 61000, category: '근태' },
-  { id: 'demo-4', name: '용역계약서_초안.docx', size: 148000, category: '계약서' },
-  { id: 'demo-5', name: '사내동호회_지원.hwp', size: 54000, category: UNCLASSIFIED },
-  { id: 'demo-6', name: '경조사비_신청.hwpx', size: 72000, category: UNCLASSIFIED, fails: true },
-]
-
-// 저장될 이름과 경로를 미리 계산해 둔다. 같은 이름이면 _2를 붙인다. (ADR 0005)
-function prepare(items) {
-  return items.map((item) => {
-    const savedName = withSuffix(item.name, item.conflict ? 2 : 1)
-    return {
-      ...item,
-      savedName,
-      target: savePath(item.category, savedName),
-      renamed: Boolean(item.conflict),
-      saveStatus: 'waiting',
-    }
-  })
-}
-
-function SaveScreen({ items = DEMO_ITEMS, onBack, onRestart }) {
-  const [rows, setRows] = useState(() => prepare(items))
+function SaveScreen({ items, dispatch, onBack, onRestart }) {
   const [phase, setPhase] = useState('idle')
+  const [notice, setNotice] = useState('')
   const [folder, setFolder] = useState('')
-  const [pickError, setPickError] = useState('')
-
-  const savedCount = rows.filter((row) => row.saveStatus === 'saved').length
-  const failedCount = rows.filter((row) => row.saveStatus === 'failed').length
+  const rootRef = useRef(null)
+  const alive = useRef(true)
   const logName = logFileName()
+
+  const savedCount = items.filter((item) => item.saveStatus === 'saved').length
+  const failedCount = items.filter((item) => item.saveStatus === 'failed').length
 
   const folders = GROUP_ORDER.map((name) => ({
     name,
-    count: rows.filter((row) => row.category === name).length,
+    count: items.filter((item) => item.category === name).length,
   })).filter((group) => group.count > 0)
 
-  // 껍데기 저장. 한 줄씩 상태만 바꾼다.
-  // TODO(R1): showDirectoryPicker 핸들로 실제 파일을 쓰고 기록표에 한 줄씩 이어 쓴다. (ADR 0011)
+  // StrictMode는 effect를 두 번 실행한다. 되살리는 것도 여기서 해야 한다.
   useEffect(() => {
-    if (phase !== 'saving') return
-
-    const current = rows.findIndex((row) => row.saveStatus === 'saving')
-    if (current >= 0) {
-      const timer = setTimeout(() => {
-        setRows((prev) =>
-          prev.map((row, index) =>
-            index === current
-              ? {
-                  ...row,
-                  saveStatus: row.fails ? 'failed' : 'saved',
-                  error: row.fails
-                    ? '폴더 권한이 회수되어 쓰지 못했습니다.'
-                    : undefined,
-                }
-              : row,
-          ),
-        )
-      }, 420)
-      return () => clearTimeout(timer)
+    alive.current = true
+    return () => {
+      alive.current = false
     }
+  }, [])
 
-    const next = rows.findIndex((row) => row.saveStatus === 'waiting')
-    if (next < 0) {
-      setPhase('done')
+  // 지난번에 고른 폴더를 그대로 쓴다. 권한이 남아 있을 때만 복원한다. (ADR 0003)
+  useEffect(() => {
+    let cancelled = false
+    recallDirectory().then((handle) => {
+      if (cancelled || !handle) return
+      rootRef.current = handle
+      setFolder(folderLabel(handle))
+    })
+    return () => {
+      cancelled = true
+    }
+    // 처음 열 때만 확인한다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function handlePickFolder() {
+    setNotice('')
+    const handle = await pickRootDirectory()
+    if (!handle) {
+      // 취소·권한 거부. 아무것도 만들지 않고 확인 화면 상태를 그대로 둔다. (ADR 0003)
+      setNotice('폴더를 선택해야 저장할 수 있습니다.')
       return
     }
-    setRows((prev) =>
-      prev.map((row, index) =>
-        index === next ? { ...row, saveStatus: 'saving' } : row,
-      ),
-    )
-  }, [phase, rows])
-
-  function handlePickFolder() {
-    // TODO(R1): showDirectoryPicker()로 고르고 핸들을 idb-keyval에 기억한다. (ADR 0003)
-    // 사용자가 취소하거나 권한을 거부하면 아무것도 만들지 않고 중단한다.
-    setPickError('')
-    setFolder('바탕화면/경영지원')
-  }
-
-  function handleStart() {
-    if (!folder) {
-      setPickError('폴더를 선택해야 저장할 수 있습니다.')
+    if (!(await ensurePermission(handle))) {
+      setNotice('폴더에 쓸 권한이 없습니다. 다른 폴더를 골라 주세요.')
       return
     }
-    setPhase('saving')
+
+    rootRef.current = handle
+    setFolder(folderLabel(handle))
+    await rememberDirectory(handle)
   }
 
-  function handleRetryFailed() {
-    // 재시도는 실패한 파일만. 이미 저장된 파일은 건드리지 않는다. (ADR 0011)
-    setRows((prev) =>
-      prev.map((row) =>
-        row.saveStatus === 'failed'
-          ? { ...row, saveStatus: 'waiting', error: undefined, fails: false }
-          : row,
-      ),
-    )
+  // 저장 직전에 이름을 확정한다. 그때 폴더에 무엇이 있는지 알 수 있기 때문이다. (ADR 0005)
+  async function runSave(targets) {
+    const rootHandle = rootRef.current
+    if (!rootHandle) {
+      setNotice('폴더를 선택해야 저장할 수 있습니다.')
+      return
+    }
+    setNotice('')
     setPhase('saving')
+
+    const onRow = (id, patch) => {
+      if (alive.current) dispatch({ type: 'update', id, patch })
+    }
+    try {
+      // 저장될 이름을 먼저 목록에 반영한다. 대기 중인 줄에도 `_2`가 보인다. (ADR 0005)
+      const planned = await planSaves(targets, rootHandle)
+      dispatch({ type: 'plan', rows: planned })
+      await saveAll(planned, { rootHandle, onRow, logName })
+    } finally {
+      if (alive.current) setPhase('done')
+    }
+  }
+
+  // 재시도는 실패한 파일만. 저장된 파일은 그대로 둔다. (ADR 0011)
+  async function handleRetryFailed(id) {
+    const failed = items.filter(
+      (item) => item.saveStatus === 'failed' && (!id || item.id === id),
+    )
+    await runSave(failed)
   }
 
   return (
@@ -127,10 +121,10 @@ function SaveScreen({ items = DEMO_ITEMS, onBack, onRestart }) {
 
         <div className="save__summary">
           <div className="save__stat">
-            <span className="save__stat-value">{rows.length}</span>
+            <span className="save__stat-value">{items.length}</span>
             <span className="save__stat-label">전체</span>
           </div>
-          {phase !== 'idle' && (
+          {(phase === 'saving' || phase === 'done') && (
             <div className="save__stat save__stat--ok">
               <span className="save__stat-value">{savedCount}</span>
               <span className="save__stat-label">저장됨</span>
@@ -162,9 +156,9 @@ function SaveScreen({ items = DEMO_ITEMS, onBack, onRestart }) {
         </button>
       </section>
 
-      {pickError && (
+      {notice && (
         <p className="save__notice" role="status">
-          {pickError}
+          {notice}
         </p>
       )}
 
@@ -202,7 +196,7 @@ function SaveScreen({ items = DEMO_ITEMS, onBack, onRestart }) {
       ) : (
         <section className="save__list-card">
           <ul className="save__list">
-            {rows.map((row) => (
+            {items.map((row) => (
               <SaveRow key={row.id} item={row} onRetry={handleRetryFailed} />
             ))}
           </ul>
@@ -211,7 +205,8 @@ function SaveScreen({ items = DEMO_ITEMS, onBack, onRestart }) {
 
       <div className="save__bar">
         <p className="save__count">
-          {phase === 'idle' && `${rows.length}개를 ${folders.length}개 폴더에 나눠 넣습니다`}
+          {phase === 'idle' &&
+            `${items.length}개를 ${folders.length}개 폴더에 나눠 넣습니다`}
           {phase === 'saving' && '저장하는 중입니다. 창을 닫지 마세요'}
           {phase === 'done' &&
             (failedCount > 0
@@ -226,7 +221,7 @@ function SaveScreen({ items = DEMO_ITEMS, onBack, onRestart }) {
                 <button
                   type="button"
                   className="save__button save__button--quiet"
-                  onClick={handleRetryFailed}
+                  onClick={() => handleRetryFailed()}
                 >
                   실패분 다시 시도
                 </button>
@@ -248,7 +243,7 @@ function SaveScreen({ items = DEMO_ITEMS, onBack, onRestart }) {
               <button
                 type="button"
                 className="save__button"
-                onClick={handleStart}
+                onClick={() => runSave(items)}
                 disabled={phase === 'saving' || !folder}
               >
                 저장 시작

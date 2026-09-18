@@ -31,7 +31,7 @@ function App() {
     <div className="app">
       {screen === 's1' && <UploadScreen items={items} dispatch={dispatch} classifying={busy} onClassify={() => runClassification()} />}
       {screen === 's2' && <ConfirmScreen items={items} dispatch={dispatch} busy={busy} onRetry={runClassification} onBack={() => setScreen('s1')} onNext={() => setScreen('s3')} />}
-      {screen === 's3' && <SaveScreen items={items} onBack={() => setScreen('s2')} onRestart={() => { dispatch({ type: 'reset' }); setScreen('s1') }} />}
+      {screen === 's3' && <SaveScreen items={items} dispatch={dispatch} onBack={() => setScreen('s2')} onRestart={() => { dispatch({ type: 'reset' }); setScreen('s1') }} />}
     </div>
   )
 }
