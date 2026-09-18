@@ -42,11 +42,13 @@ export function logRow(row, date = new Date()) {
 }
 
 // 헤더가 필요한지 알려면 파일이 이미 있었는지부터 봐야 한다.
+// 기록표 쓰기가 실패하면 0바이트 파일이 남는다. 그대로 이어 쓰면 BOM과 헤더가 빠진
+// 기록표가 만들어지므로 빈 파일은 없는 파일로 본다. (ADR 0006)
 async function openLogFile(rootHandle, name) {
   try {
     const handle = await rootHandle.getFileHandle(name)
     const file = await handle.getFile()
-    return { handle, existed: true, size: file.size }
+    return { handle, existed: file.size > 0, size: file.size }
   } catch {
     const handle = await rootHandle.getFileHandle(name, { create: true })
     return { handle, existed: false, size: 0 }

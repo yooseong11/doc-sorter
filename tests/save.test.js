@@ -280,6 +280,23 @@ test('기록표는 새로 만들 때만 BOM과 헤더를 붙이고 같은 날은
   assert.ok(second.startsWith(first))
 })
 
+test('비어 있는 기록표에는 헤더와 BOM을 다시 붙인다', async () => {
+  const name = logFileName(new Date(2026, 8, 18))
+  const date = new Date(2026, 8, 18, 14, 5, 9)
+  // 기록표 쓰기가 실패해 0바이트 파일만 남은 상태. (ADR 0011)
+  const { handle, files } = makeRoot({ [name]: '' })
+  const logged = row({ savedName: '출장정산_영수증.pdf', target: '비용 증빙/출장정산_영수증.pdf' })
+
+  await appendLog(handle, name, [logged], date)
+
+  const text = files.get(name)
+  assert.equal(
+    text,
+    `\uFEFF${LOG_COLUMNS.join(',')}\r\n2026-09-18 14:05:09,출장정산_영수증.pdf,비용 증빙,비용 증빙/출장정산_영수증.pdf,10\r\n`,
+  )
+  assert.equal(text.split('\r\n').filter(Boolean).length, 2)
+})
+
 test('CSV 값은 쉼표·따옴표·줄바꿈을 이스케이프한다', () => {
   assert.equal(toCsvField('평범한이름.pdf'), '평범한이름.pdf')
   assert.equal(toCsvField('쉼표,이름.pdf'), '"쉼표,이름.pdf"')
