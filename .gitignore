@@ -26,3 +26,6 @@ dist-ssr
 .env
 .env.local
 .vercel
+
+# Cowork 작업 중 생기는 폴더
+Claude outputs/
