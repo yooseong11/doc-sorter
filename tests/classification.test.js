@@ -92,6 +92,28 @@ test('환경 변수로 제공자 주소·모델·키를 바꾸며 자동 재시�
   assert.throws(() => readAIConfig({ AI_PROVIDER: 'unknown' }))
   assert.throws(() => readAIConfig({}))
 })
+test('DeepSeek은 기본 주소를 쓰고 추론 모드를 끈 채로 json_object를 요청한다', async () => {
+  let options, payload
+  class Client {
+    constructor(value) {
+      options = value
+      this.chat = { completions: { create: async (input) => {
+        payload = input
+        return { choices: [{ finish_reason: 'stop', message: { content: '{"category":"근태"}' } }] }
+      } } }
+    }
+  }
+  const classify = createClassifier({ AI_PROVIDER: 'deepseek', AI_MODEL: 'deepseek-flash', AI_API_KEY: 'test-key' }, Client)
+  assert.equal((await classify({ name: 'a', text: '내용' })).category, '근태')
+  assert.equal(options.baseURL, 'https://api.deepseek.com/v1')
+  // DeepSeek은 strict json_schema를 400으로 거부한다.
+  assert.equal(payload.response_format.type, 'json_object')
+  // 추론 모드가 켜지면 추론 토큰만 수백 개가 나가고 출력이 잘린다.
+  assert.deepEqual(payload.thinking, { type: 'disabled' })
+  assert.ok(Number.isInteger(payload.max_tokens))
+  // json_object는 "json"이라는 단어와 형식 예시를 요구한다.
+  assert.match(payload.messages[0].content, /json/)
+})
 test('API는 메서드·입력 검증을 먼저 하며 내부 오류를 노출하지 않는다', async () => {
   let calls = 0
   const handler = createHandler(() => async () => { calls++; throw new Error('secret-api-key') })
