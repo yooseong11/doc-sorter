@@ -1,0 +1,322 @@
+.save {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-20) var(--space-6) var(--space-16);
+}
+
+/* 상단 sky 광원 — S1 · S2와 같다 */
+.save__glow {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 420px;
+  background: radial-gradient(
+    60% 100% at 50% 0%,
+    var(--color-accent-glow) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.save__head {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-10);
+  margin-bottom: var(--space-8);
+}
+
+.save__intro {
+  max-width: 520px;
+}
+
+.save__title {
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.save__lead {
+  margin-top: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.save__lead code {
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  color: var(--color-accent-quiet);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+
+.save__summary {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.save__stat {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  min-width: 96px;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.save__stat--ok .save__stat-value {
+  color: var(--color-ok);
+}
+
+.save__stat--failed {
+  border-color: rgba(248, 113, 113, 0.3);
+  background: var(--color-danger-soft);
+}
+
+.save__stat--failed .save__stat-value {
+  color: var(--color-danger);
+}
+
+.save__stat-value {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  line-height: var(--leading-heading);
+}
+
+.save__stat-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+}
+
+/* 최상위 폴더 줄 */
+.save__folder {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.save__folder-main {
+  min-width: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.save__folder-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+}
+
+.save__folder-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-accent-quiet);
+}
+
+.save__folder-path--empty {
+  font-family: var(--font-sans);
+  color: var(--color-text-faint);
+}
+
+.save__notice {
+  position: relative;
+  margin-bottom: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--color-warn-line);
+  border-radius: var(--radius-md);
+  background: var(--color-warn-soft);
+  color: var(--color-warn);
+  font-size: var(--text-sm);
+}
+
+/* 저장 전 미리보기 */
+.save__plan,
+.save__list-card {
+  position: relative;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.save__plan-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-raised);
+}
+
+.save__plan-title {
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.save__plan-hint {
+  margin-left: auto;
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+}
+
+.save__tree,
+.save__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.save__tree-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--color-border);
+}
+
+.save__tree-item:first-child {
+  border-top: 0;
+}
+
+.save__tree-name {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-accent-quiet);
+}
+
+.save__tree-item--review .save__tree-name {
+  color: var(--color-warn);
+}
+
+.save__tree-item--log .save__tree-name {
+  color: var(--color-text-muted);
+}
+
+.save__tree-count {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-raised);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-heading);
+}
+
+.save__tree-note {
+  margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+}
+
+.save__tree-item--review .save__tree-note {
+  color: var(--color-warn);
+}
+
+/* 하단 바 — S1 · S2와 같은 모양 */
+.save__bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.save__count {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.save__bar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.save__button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-accent);
+  color: var(--color-accent-on);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  transition: background var(--ease), opacity var(--ease);
+}
+
+.save__button:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+
+.save__button:disabled {
+  opacity: 0.4;
+}
+
+.save__button--quiet {
+  border: 1px solid var(--color-border-strong);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.save__button--quiet:hover:not(:disabled) {
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+@media (max-width: 880px) {
+  .save {
+    padding-top: var(--space-12);
+  }
+
+  .save__head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .save__title {
+    font-size: var(--text-2xl);
+  }
+
+  .save__plan-hint,
+  .save__tree-note {
+    display: none;
+  }
+
+  .save__bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .save__bar-actions {
+    justify-content: flex-end;
+  }
+}
