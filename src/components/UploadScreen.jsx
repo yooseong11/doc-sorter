@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import FileRow from './FileRow'
-import { isReadable } from '../lib/fileKind'
+import { createDocument } from '../lib/documents'
+import { prepareDocument } from '../lib/documentFlow'
 import './UploadScreen.css'
 
 // 폴더 선택 API가 없으면 첫 화면에서 막는다. (ADR 0012)
@@ -10,66 +11,22 @@ const CAN_PICK_DIRECTORY =
 
 const ACCEPT = '.pdf,.docx,.hwpx,.hwp,.doc'
 
-let nextId = 0
-
-function UploadScreen() {
-  const [items, setItems] = useState([])
-  const [classifying, setClassifying] = useState(false)
+function UploadScreen({ items, dispatch, classifying, onClassify }) {
   const inputRef = useRef(null)
-
   const reading = items.some((item) => item.status === 'reading')
-  const canClassify = items.length > 0 && !reading && !classifying
+  const canClassify = CAN_PICK_DIRECTORY && items.length > 0 && !reading && !classifying
 
   function handlePick(event) {
     const picked = Array.from(event.target.files ?? [])
     event.target.value = ''
-    if (picked.length === 0) return
-
-    const added = picked.map((file) => {
-      const readable = isReadable(file.name)
-      return {
-        id: `file-${nextId++}`,
-        name: file.name,
-        size: file.size,
-        readable,
-        // 읽을 수 있는 형식만 텍스트를 꺼낸다. 나머지는 바로 대기. (ADR 0007)
-        status: readable ? 'reading' : 'waiting',
-        file,
-      }
-    })
-
-    setItems((prev) => [...prev, ...added])
-
-    // TODO(R1): pdfjs-dist·mammoth·jszip으로 실제 텍스트 추출을 붙인다. (ADR 0007)
-    // 지금은 '읽는 중' 상태만 화면에 보여준다.
-    added.forEach((item, index) => {
-      if (!item.readable) return
-      setTimeout(
-        () => {
-          setItems((prev) =>
-            prev.map((each) =>
-              each.id === item.id ? { ...each, status: 'waiting' } : each,
-            ),
-          )
-        },
-        800 + index * 400,
-      )
-    })
+    if (!CAN_PICK_DIRECTORY || classifying) return
+    const added = picked.map((file) => createDocument(file, crypto.randomUUID()))
+    dispatch({ type: 'add', items: added })
+    for (const item of added) void prepareDocument(item, { dispatch })
   }
 
   function handleRemove(id) {
-    setItems((prev) => prev.filter((item) => item.id !== id))
-  }
-
-  function handleClassify() {
-    // TODO(R1): 분류 API 호출과 확인 화면(S2)으로 이어붙인다. (ADR 0013)
-    setClassifying(true)
-    // 읽지 못한 파일은 분류에 보내지 않는다. 대기로 두고 미분류로 넘긴다. (ADR 0007)
-    setItems((prev) =>
-      prev.map((item) =>
-        item.readable ? { ...item, status: 'classifying' } : item,
-      ),
-    )
+    if (!classifying) dispatch({ type: 'remove', id })
   }
 
   return (
@@ -175,7 +132,7 @@ function UploadScreen() {
         ) : (
           <ul className="upload__list">
             {items.map((item) => (
-              <FileRow key={item.id} item={item} onRemove={handleRemove} />
+              <FileRow key={item.id} item={item} onRemove={handleRemove} disabled={classifying || !CAN_PICK_DIRECTORY} />
             ))}
           </ul>
         )}
@@ -199,14 +156,14 @@ function UploadScreen() {
               type="button"
               className="upload__button upload__button--quiet"
               onClick={() => inputRef.current?.click()}
-              disabled={classifying}
+              disabled={classifying || !CAN_PICK_DIRECTORY}
             >
               파일 더 넣기
             </button>
             <button
               type="button"
               className="upload__button"
-              onClick={handleClassify}
+              onClick={onClassify}
               disabled={!canClassify}
             >
               {classifying && (

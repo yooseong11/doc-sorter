@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import ResultRow from './ResultRow'
 import { GROUP_ORDER, UNCLASSIFIED, hintOf } from '../lib/categories'
 import './ConfirmScreen.css'
@@ -6,63 +5,7 @@ import './ConfirmScreen.css'
 // S2 확인 화면 — 카테고리별로 묶어서 보여주고, 행마다 드롭다운으로 바꾼다. (ADR 0004)
 // 실패한 파일도 목록에 남기고 사유와 재시도 버튼을 붙인다. (ADR 0013)
 
-// TODO(R1): S1의 분류 결과를 props로 받는다. 지금은 화면을 보려고 넣은 예시다.
-const DEMO_ITEMS = [
-  {
-    id: 'demo-1',
-    name: '전자세금계산서_9월.pdf',
-    size: 182000,
-    category: '비용 증빙',
-    quote: '공급자 등록번호와 공급가액이 적힌 전자세금계산서입니다.',
-    status: 'classified',
-  },
-  {
-    id: 'demo-2',
-    name: '출장정산_영수증.pdf',
-    size: 96000,
-    category: '비용 증빙',
-    quote: '9월 출장 교통비와 숙박비 영수증 정산 내역입니다.',
-    status: 'classified',
-  },
-  {
-    id: 'demo-3',
-    name: '2026-09-01_연차신청서.pdf',
-    size: 61000,
-    category: '근태',
-    quote: '연차 사용 기간과 사유를 적어 제출하는 신청서입니다.',
-    status: 'classified',
-  },
-  {
-    id: 'demo-4',
-    name: '용역계약서_초안.docx',
-    size: 148000,
-    category: '계약서',
-    quote: '용역의 범위와 대금 지급 시기를 정한 계약 조항입니다.',
-    status: 'classified',
-  },
-  {
-    id: 'demo-5',
-    name: '사내동호회_지원.hwp',
-    size: 54000,
-    category: UNCLASSIFIED,
-    quote: '',
-    status: 'classified',
-  },
-  {
-    id: 'demo-6',
-    name: '경조사비_신청.hwpx',
-    size: 72000,
-    category: UNCLASSIFIED,
-    quote: '',
-    status: 'failed',
-    error: '네트워크 오류로 분류하지 못했습니다.',
-  },
-]
-
-function ConfirmScreen({ items = DEMO_ITEMS, onBack, onNext }) {
-  // TODO(R1): 상태를 App으로 올려 S1·S3와 같은 파일 객체를 쓴다. (ADR 0013)
-  const [rows, setRows] = useState(items)
-
+function ConfirmScreen({ items: rows, dispatch, busy, onRetry, onBack, onNext }) {
   const groups = GROUP_ORDER.map((name) => ({
     name,
     rows: rows.filter((row) => row.category === name),
@@ -76,28 +19,7 @@ function ConfirmScreen({ items = DEMO_ITEMS, onBack, onNext }) {
     rows.length > 0 && rows.every((row) => row.category === UNCLASSIFIED)
 
   function handleChangeCategory(id, category) {
-    // 사용자가 직접 고른 카테고리는 분류됨으로 본다. (ADR 0013)
-    setRows((prev) =>
-      prev.map((row) =>
-        row.id === id
-          ? {
-              ...row,
-              category,
-              status: category === UNCLASSIFIED ? row.status : 'classified',
-              error: category === UNCLASSIFIED ? row.error : undefined,
-            }
-          : row,
-      ),
-    )
-  }
-
-  function handleRetry(id) {
-    // TODO(R1): 실패한 파일만 분류 API에 다시 보낸다. 지금은 상태만 바뀐다. (ADR 0013)
-    setRows((prev) =>
-      prev.map((row) =>
-        row.id === id ? { ...row, status: 'classifying' } : row,
-      ),
-    )
+    if (!busy) dispatch({ type: 'category', id, category })
   }
 
   return (
@@ -159,7 +81,8 @@ function ConfirmScreen({ items = DEMO_ITEMS, onBack, onNext }) {
                     key={row.id}
                     item={row}
                     onChangeCategory={handleChangeCategory}
-                    onRetry={handleRetry}
+                    onRetry={onRetry}
+                    disabled={busy}
                   />
                 ))}
               </ul>
@@ -180,10 +103,11 @@ function ConfirmScreen({ items = DEMO_ITEMS, onBack, onNext }) {
             type="button"
             className="confirm__button confirm__button--quiet"
             onClick={onBack}
+            disabled={busy}
           >
             파일 다시 고르기
           </button>
-          <button type="button" className="confirm__button" onClick={onNext}>
+          <button type="button" className="confirm__button" onClick={onNext} disabled={busy}>
             저장할 폴더 고르기
           </button>
         </div>

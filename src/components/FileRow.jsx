@@ -2,7 +2,7 @@ import StatusBadge from './StatusBadge'
 import { extensionOf, formatSize } from '../lib/fileKind'
 import './FileRow.css'
 
-function FileRow({ item, onRemove }) {
+function FileRow({ item, onRemove, disabled }) {
   const ext = extensionOf(item.name) || 'file'
 
   return (
@@ -27,10 +27,11 @@ function FileRow({ item, onRemove }) {
 
       <div className="file-row__side">
         {!item.readable && <StatusBadge status="unreadable" />}
-        <StatusBadge status={item.status} />
+        <StatusBadge status={item.status} title={item.error} />
         <button
           type="button"
           className="file-row__remove"
+          disabled={disabled}
           onClick={() => onRemove(item.id)}
           aria-label={`${item.name} 목록에서 빼기`}
         >

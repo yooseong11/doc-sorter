@@ -8,7 +8,7 @@ import './SaveScreen.css'
 // 성공분은 되돌리지 않고 실패분만 다시 시도한다. (ADR 0011)
 // 미분류도 예외 없이 `미분류` 폴더에 넣는다. (ADR 0014)
 
-// TODO(R1): S2의 확인 결과를 props로 받는다. 지금은 화면을 보려고 넣은 예시다.
+// 단독 화면 확인용 기본 예시. App에서는 실제 목록을 전달한다.
 const DEMO_ITEMS = [
   { id: 'demo-1', name: '전자세금계산서_9월.pdf', size: 182000, category: '비용 증빙' },
   { id: 'demo-2', name: '출장정산_영수증.pdf', size: 96000, category: '비용 증빙', conflict: true },

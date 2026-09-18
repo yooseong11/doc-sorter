@@ -7,7 +7,7 @@ import './ResultRow.css'
 // 확인 화면의 한 줄. 파일명 · 카테고리 드롭다운 · 근거 한 줄. (ADR 0004)
 // 확신이 없는 항목(미분류 · 분류 실패)만 펼친 채로 시작한다.
 
-function ResultRow({ item, onChangeCategory, onRetry }) {
+function ResultRow({ item, onChangeCategory, onRetry, disabled }) {
   const needsReview = item.status === 'failed' || item.category === UNCLASSIFIED
   const [open, setOpen] = useState(needsReview)
   const bodyId = useId()
@@ -81,14 +81,15 @@ function ResultRow({ item, onChangeCategory, onRetry }) {
         </button>
 
         <div className="result-row__side">
-          {item.status === 'failed' && (
-            <StatusBadge status="failed" title={item.error} />
+          {['failed', 'reading', 'classifying'].includes(item.status) && (
+            <StatusBadge status={item.status} title={item.error} />
           )}
 
           <span className="result-row__select-wrap">
             <select
               className="result-row__select"
               value={item.category}
+              disabled={disabled}
               aria-label={`${item.name} 카테고리`}
               onChange={(event) => onChangeCategory(item.id, event.target.value)}
             >
@@ -124,6 +125,7 @@ function ResultRow({ item, onChangeCategory, onRetry }) {
                 type="button"
                 className="result-row__link"
                 onClick={() => onRetry(item.id)}
+                disabled={disabled}
               >
                 다시 시도
               </button>

@@ -1,0 +1,111 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { buildClassificationInput, normalizeClassification, requestClassification, MAX_TEXT_CHARS } from '../src/lib/classification.js'
+import { createDocument, documentsReducer } from '../src/lib/documents.js'
+import { classifyDocuments, prepareDocument } from '../src/lib/documentFlow.js'
+import { extractText } from '../src/lib/extractText.js'
+import { createClassifier, readAIConfig } from '../server/classifier.js'
+import { createHandler } from '../api/classify.js'
+
+const document = (id) => ({ ...createDocument({ name: `${id}.pdf`, size: 10 }, id), status: 'waiting', text: '분류할 문서 내용입니다.' })
+
+test('전송 데이터에는 이름과 제한된 앞부분만 포함한다', () => {
+  const input = buildClassificationInput({ ...document('a'), text: '가'.repeat(10000), secret: 'private' })
+  assert.deepEqual(Object.keys(input), ['name', 'text'])
+  assert.equal(input.text.length, MAX_TEXT_CHARS)
+})
+test('잘못된 응답과 없는 카테고리는 미분류가 된다', () => {
+  for (const value of [null, {}, { category: '없는 분류' }, { category: '계약서', extra: true }]) {
+    assert.equal(normalizeClassification(value).category, '미분류')
+  }
+  assert.equal(normalizeClassification({ category: '계약서' }).category, '계약서')
+})
+test('파일별 실패를 격리하고 미지원 파일은 API를 호출하지 않는다', async () => {
+  let rows = [document('a'), document('b'), { ...document('c'), readable: false }]
+  const calls = []
+  const dispatch = (action) => { rows = documentsReducer(rows, action) }
+  await classifyDocuments(rows, { dispatch, classify: async (input) => {
+    calls.push(input.name)
+    if (input.name === 'a.pdf') throw new Error('network')
+    return { category: '계약서' }
+  } })
+  assert.deepEqual(calls, ['a.pdf', 'b.pdf'])
+  assert.deepEqual(rows.map((row) => row.status), ['failed', 'classified', 'classified'])
+  rows = documentsReducer(rows, { type: 'category', id: 'b', category: '근태' })
+  await classifyDocuments(rows, { dispatch, retry: true, classify: async (input) => {
+    calls.push(input.name)
+    return { category: '복지 신청' }
+  } })
+  assert.deepEqual(calls, ['a.pdf', 'b.pdf', 'a.pdf'])
+  assert.equal(rows[1].category, '근태')
+})
+test('삭제한 파일은 늦게 끝난 추출 결과로 돌아오지 않는다', async () => {
+  let rows = [document('a')]
+  const dispatch = (action) => { rows = documentsReducer(rows, action) }
+  let finish
+  const pending = prepareDocument(rows[0], { dispatch, extract: () => new Promise((resolve) => { finish = resolve }) })
+  dispatch({ type: 'remove', id: 'a' })
+  finish({ text: '내용', readable: true })
+  await pending
+  assert.deepEqual(rows, [])
+})
+test('읽기 실패 재시도는 파일부터 다시 읽는다', async () => {
+  let rows = [document('a')]
+  const dispatch = (action) => { rows = documentsReducer(rows, action) }
+  await prepareDocument(rows[0], { dispatch, extract: async () => { throw new Error('corrupt') } })
+  assert.equal(rows[0].failedStage, 'read')
+  await classifyDocuments(rows, { dispatch, retry: true, extract: async () => ({ readable: true, text: '복구된 문서의 내용입니다.' }), classify: async () => ({ category: '계약서' }) })
+  assert.equal(rows[0].status, 'classified')
+})
+test('미지원 형식과 텍스트 부족은 읽을 수 없음으로 반환한다', async () => {
+  assert.equal((await extractText({ name: 'a.hwp' }, {})).reason, 'unsupported-format')
+  assert.equal((await extractText({ name: 'a.PDF' }, { pdf: async () => ' \n ' })).reason, 'empty-text')
+  assert.equal((await extractText({ name: 'a.PDF' }, { pdf: async () => '문서의 내용을 충분히 읽었습니다.' })).readable, true)
+})
+test('클라이언트는 자체 API를 호출하고 HTTP 오류를 실패로 처리한다', async () => {
+  const input = { name: 'a.pdf', text: '내용' }
+  const result = await requestClassification(input, async (url, options) => {
+    assert.equal(url, '/api/classify')
+    assert.deepEqual(JSON.parse(options.body), input)
+    return { ok: true, json: async () => ({ category: '계약서' }) }
+  })
+  assert.equal(result.category, '계약서')
+  await assert.rejects(requestClassification(input, async () => ({ ok: false })))
+})
+test('환경 변수로 제공자 주소·모델·키를 바꾸며 자동 재시도하지 않는다', async () => {
+  let options, payload
+  class Client {
+    constructor(value) {
+      options = value
+      this.chat = { completions: { create: async (input) => {
+        payload = input
+        return { choices: [{ finish_reason: 'stop', message: { content: '{"category":"계약서"}' } }] }
+      } } }
+    }
+  }
+  const classify = createClassifier({ AI_PROVIDER: 'openai-compatible', AI_BASE_URL: 'https://example.com/v1', AI_MODEL: 'custom', AI_API_KEY: 'test-key' }, Client)
+  assert.equal((await classify({ name: 'a', text: '내용' })).category, '계약서')
+  assert.equal(options.baseURL, 'https://example.com/v1')
+  assert.equal(options.maxRetries, 0)
+  assert.equal(payload.model, 'custom')
+  assert.equal(payload.response_format.json_schema.strict, true)
+  assert.throws(() => readAIConfig({ AI_PROVIDER: 'unknown' }))
+  assert.throws(() => readAIConfig({}))
+})
+test('API는 메서드·입력 검증을 먼저 하며 내부 오류를 노출하지 않는다', async () => {
+  let calls = 0
+  const handler = createHandler(() => async () => { calls++; throw new Error('secret-api-key') })
+  async function invoke(method, body) {
+    const res = { setHeader() {}, status(code) { this.code = code; return this }, json(value) { this.body = value; return this } }
+    await handler({ method, body }, res)
+    return res
+  }
+  assert.equal((await invoke('GET')).code, 405)
+  assert.equal((await invoke('POST', '{')).code, 400)
+  assert.equal((await invoke('POST', { name: 'a', text: 'x'.repeat(6001) })).code, 400)
+  assert.equal((await invoke('POST', { name: 'a', text: 'ok', file: 'raw' })).code, 400)
+  assert.equal(calls, 0)
+  const result = await invoke('POST', { name: 'a', text: 'ok' })
+  assert.equal(result.code, 502)
+  assert.ok(!JSON.stringify(result.body).includes('secret-api-key'))
+})
