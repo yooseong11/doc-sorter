@@ -1,0 +1,270 @@
+.upload {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-20) var(--space-6) var(--space-16);
+}
+
+/* 상단 sky 광원 */
+.upload__glow {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 420px;
+  background: radial-gradient(
+    60% 100% at 50% 0%,
+    var(--color-accent-glow) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.upload__hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-10);
+  margin-bottom: var(--space-12);
+}
+
+.upload__intro {
+  max-width: 520px;
+}
+
+.upload__title {
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.upload__lead {
+  margin-top: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.upload__flow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.upload__chip {
+  display: grid;
+  place-items: center;
+  gap: var(--space-2);
+  width: 88px;
+  height: 88px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+.upload__chip--accent {
+  border-color: var(--color-accent-line);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-quiet);
+  box-shadow: var(--shadow-accent);
+}
+
+.upload__flow-line {
+  width: 16px;
+  height: 2px;
+  background: var(--color-border-strong);
+}
+
+.upload__flow-mark {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-accent-on);
+}
+
+.upload__notice {
+  position: relative;
+  margin-bottom: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: var(--radius-md);
+  background: var(--color-warn-soft);
+  color: var(--color-warn);
+  font-size: var(--text-sm);
+}
+
+.upload__panel {
+  position: relative;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+/* 빈 상태 */
+.upload__empty {
+  display: grid;
+  justify-items: center;
+  padding: var(--space-16) var(--space-6);
+  text-align: center;
+}
+
+.upload__empty-mark {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: var(--space-5);
+  border: 1px solid var(--color-accent-line);
+  border-radius: var(--radius-lg);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-quiet);
+}
+
+.upload__empty-title {
+  font-size: var(--text-xl);
+  font-weight: 600;
+}
+
+.upload__empty-hint {
+  margin-top: var(--space-2);
+  margin-bottom: var(--space-6);
+  font-size: var(--text-sm);
+  color: var(--color-text-faint);
+}
+
+.upload__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+/* 하단 바 */
+.upload__bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.upload__count {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.upload__count-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-accent-quiet);
+}
+
+.upload__bar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* 버튼 */
+.upload__button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--color-accent);
+  color: var(--color-accent-on);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  transition: background var(--ease), opacity var(--ease);
+}
+
+.upload__button:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+}
+
+.upload__button:disabled {
+  opacity: 0.4;
+}
+
+.upload__button--quiet {
+  border: 1px solid var(--color-border-strong);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-weight: 400;
+}
+
+.upload__button--quiet:hover:not(:disabled) {
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+}
+
+.upload__spinner {
+  width: 14px;
+  height: 14px;
+  border: var(--border-thin) solid var(--color-accent-line);
+  border-top-color: var(--color-accent-quiet);
+  border-radius: var(--radius-pill);
+  animation: upload-spin 700ms linear infinite;
+}
+
+.upload__button .upload__spinner {
+  border-color: rgba(3, 7, 18, 0.3);
+  border-top-color: var(--color-accent-on);
+}
+
+@keyframes upload-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .upload__spinner {
+    animation-duration: 2400ms;
+  }
+}
+
+.upload__input {
+  display: none;
+}
+
+@media (max-width: 880px) {
+  .upload {
+    padding-top: var(--space-12);
+  }
+
+  .upload__hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .upload__title {
+    font-size: var(--text-2xl);
+  }
+
+  .upload__bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .upload__bar-actions {
+    justify-content: flex-end;
+  }
+}
