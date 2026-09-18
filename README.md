@@ -4,7 +4,7 @@
 받은 문서를 카테고리별로 나누고, 확인 후 폴더에 저장하고, CSV로 기록합니다.
 
 - 스토리 맵: [docs/STORY_MAP.md](docs/STORY_MAP.md)
-- 결정 기록(ADR): [docs/adr/](docs/adr/README.md)
+- 결정 기록(ADR): [docs/adr/](docs/adr/)
 
 ## 시작
 ```bash
