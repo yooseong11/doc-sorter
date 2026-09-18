@@ -1,0 +1,112 @@
+/* 전역 디자인 토큰 (ADR 0010)
+   - 색은 Tailwind 팔레트 값을 가져다 쓴다. 메인 sky, 서브 gray.
+   - 간격은 4px 단위, border-radius는 2px 단위, font-size는 짝수.
+   - 홀수 px 값은 쓰지 않는다. */
+
+:root {
+  /* 팔레트 — Tailwind sky (메인) */
+  --sky-200: #bae6fd;
+  --sky-300: #7dd3fc;
+  --sky-400: #38bdf8;
+  --sky-500: #0ea5e9;
+  --sky-600: #0284c7;
+  --sky-700: #0369a1;
+  --sky-900: #0c4a6e;
+  --sky-950: #082f49;
+
+  /* 팔레트 — Tailwind gray (서브) */
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --gray-950: #030712;
+
+  /* 팔레트 — 상태용 (Tailwind amber / red / emerald) */
+  --amber-300: #fcd34d;
+  --amber-400: #fbbf24;
+  --amber-950: #451a03;
+  --red-400: #f87171;
+  --red-950: #450a0a;
+  --emerald-400: #34d399;
+
+  /* 역할 — 바탕과 면 */
+  --color-bg: var(--gray-950);
+  --color-surface: var(--gray-900);
+  --color-surface-raised: var(--gray-800);
+  --color-border: #1e2836;
+  --color-border-strong: var(--gray-700);
+
+  /* 역할 — 글자 */
+  --color-text: var(--gray-100);
+  --color-text-muted: var(--gray-400);
+  --color-text-faint: var(--gray-500);
+
+  /* 역할 — 강조(sky) */
+  --color-accent: var(--sky-500);
+  --color-accent-hover: var(--sky-400);
+  --color-accent-quiet: var(--sky-300);
+  --color-accent-on: var(--gray-950);
+  --color-accent-soft: rgba(14, 165, 233, 0.12);
+  --color-accent-line: rgba(14, 165, 233, 0.4);
+  --color-accent-glow: rgba(14, 165, 233, 0.16);
+
+  /* 역할 — 상태 */
+  --color-warn: var(--amber-300);
+  --color-warn-soft: rgba(251, 191, 36, 0.12);
+  --color-danger: var(--red-400);
+  --color-danger-soft: rgba(248, 113, 113, 0.12);
+  --color-ok: var(--emerald-400);
+
+  /* 간격 — 4px 단위 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  /* 모서리 — 2px 단위 */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 1000px;
+
+  /* 글꼴 */
+  --font-sans: 'Pretendard', system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+
+  /* 글자 크기 — 짝수 */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-md: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-4xl: 40px;
+
+  /* 줄 높이 */
+  --leading-body: 145%;
+  --leading-heading: 120%;
+
+  /* 테두리 두께 */
+  --border-thin: 2px;
+
+  /* 그림자 */
+  --shadow-card: 0 16px 32px rgba(3, 7, 18, 0.5);
+  --shadow-accent: 0 0 0 4px var(--color-accent-glow);
+
+  /* 전환 */
+  --ease: 160ms ease;
+}
