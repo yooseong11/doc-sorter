@@ -1,7 +1,7 @@
 # 0007. 읽을 수 있는 파일 형식
 
 ## 결정
-텍스트 PDF(pdfjs-dist, 지연 로드)·DOCX(mammoth)·HWPX(jszip)는 분류하고, HWP·DOC·이미지는 미분류로 보낸다.
+텍스트 PDF(pdfjs-dist, 지연 로드)·DOCX(mammoth)·HWPX(JSZip으로 압축 해제 후 본문 XML 추출)는 분류하고, HWP·DOC·이미지는 미분류로 보낸다.
 
 ## 이유
 저장은 형식과 무관하고 읽을 때만 문제다. HWP는 바이너리라 라이브러리 편차가 크고 DOC는 브라우저에서 어렵다. 못 읽는 파일도 미분류로 받아 저장·기록은 똑같이 한다.
