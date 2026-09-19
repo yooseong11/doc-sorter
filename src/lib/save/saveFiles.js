@@ -1,4 +1,4 @@
-// 카테고리 폴더에 파일을 쓰고 기록표에 한 줄씩 남긴다. (ADR 0003 · 0005 · 0011)
+// 카테고리 폴더에 파일을 쓰고 기록표에 한 줄씩 남긴다. (ADR 0003 · 0005 · 0011 · 0013)
 // 이미 저장된 파일은 되돌리지 않는다. 실패해도 반복문은 끝까지 돌고, 재시도는 실패한 파일만 한다.
 
 import { savePath } from './savePath.js'
@@ -15,16 +15,17 @@ export const LOG_ERROR = '파일은 저장했지만 기록표에 남기지 못�
 
 // 파일 하나를 쓴다. 쓰기 직전에 이름을 다시 확인해 덮어쓰지 않는다. (ADR 0005)
 // 폴더는 없을 때만 만든다. 있어도 그대로 쓴다. (ADR 0003)
-export async function writeDocument(row, rootHandle) {
+export async function writeDocument(item, rootHandle) {
   try {
-    const directory = await rootHandle.getDirectoryHandle(row.category, { create: true })
-    const { savedName, renamed } = uniqueName(await takenNames(directory), row.name)
+    const category = item.classification.category
+    const directory = await rootHandle.getDirectoryHandle(category, { create: true })
+    const { savedName, renamed } = uniqueName(await takenNames(directory), item.source.name)
     const handle = await directory.getFileHandle(savedName, { create: true })
 
     try {
       const writable = await handle.createWritable()
       try {
-        await writable.write(row.file)
+        await writable.write(item.source.file)
         await writable.close()
       } catch (error) {
         // 쓰다 만 파일을 남기지 않는다. 이미 끝난 다른 파일은 건드리지 않는다. (ADR 0011)
@@ -35,7 +36,7 @@ export async function writeDocument(row, rootHandle) {
       return { ok: false, error: saveError(error) }
     }
 
-    return { ok: true, savedName, renamed, target: savePath(row.category, savedName) }
+    return { ok: true, savedName, renamed, target: savePath(category, savedName) }
   } catch (error) {
     return { ok: false, error: saveError(error) }
   }
@@ -43,34 +44,33 @@ export async function writeDocument(row, rootHandle) {
 
 // 순차로 저장한다. 파일 하나가 끝날 때마다 화면 상태를 바꾸고 기록표에 이어 쓴다.
 // 기록표 쓰기까지 끝나야 성공으로 본다. 기록 없이 저장만 되면 폴더와 표가 어긋난다. (ADR 0011)
-// 기록만 실패한 파일은 `fileSaved`로 표시해 재시도 때 파일을 다시 쓰지 않는다. 같은 파일이 둘 생긴다.
-export async function saveAll(rows, { rootHandle, onRow, logName, date, log = appendLog, write = writeDocument }) {
-  for (const row of rows) {
+// 기록만 실패한 파일은 `log-failed`로 표시해 재시도 때 파일을 다시 쓰지 않는다. 같은 파일이 둘 생긴다. (ADR 0013)
+export async function saveAll(items, { rootHandle, onRow, logName, date, log = appendLog, write = writeDocument }) {
+  for (const item of items) {
     // 이미 저장된 파일은 건드리지 않는다. 재시도 목록에 섞여 들어와도 마찬가지다. (ADR 0011)
-    if (row.saveStatus === 'saved') continue
-    onRow(row.id, { saveStatus: 'saving', error: undefined, savedName: row.savedName })
+    if (item.save.phase === 'saved') continue
+    onRow(item.source.id, { phase: 'saving', error: null, savedName: item.save.savedName })
 
-    const result = row.fileSaved
-      ? { ok: true, savedName: row.savedName, renamed: row.renamed, target: row.target }
-      : await write(row, rootHandle)
+    const skipWrite = item.save.phase === 'log-failed'
+    const result = skipWrite
+      ? { ok: true, savedName: item.save.savedName, renamed: item.save.renamed, target: item.save.target }
+      : await write(item, rootHandle)
+
     if (!result.ok) {
-      onRow(row.id, { saveStatus: 'failed', error: result.error })
+      onRow(item.source.id, { phase: 'write-failed', error: result.error })
       continue
     }
 
-    const saved = { ...row, ...result, saveStatus: 'saved' }
+    const { savedName, renamed, target } = result
+    const saved = { ...item, save: { ...item.save, savedName, renamed, target, phase: 'saved', error: null } }
+
     try {
       await log(rootHandle, logName, [saved], date)
     } catch {
-      onRow(row.id, {
-        ...result,
-        fileSaved: true,
-        saveStatus: 'failed',
-        error: LOG_ERROR,
-      })
+      onRow(item.source.id, { savedName, renamed, target, phase: 'log-failed', error: LOG_ERROR })
       continue
     }
 
-    onRow(row.id, { ...result, fileSaved: false, saveStatus: 'saved', error: undefined })
+    onRow(item.source.id, { savedName, renamed, target, phase: 'saved', error: null })
   }
 }

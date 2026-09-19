@@ -1,4 +1,4 @@
-// 분류기록표 CSV (ADR 0006 · 0011)
+// 분류기록표 CSV (ADR 0006 · 0011 · 0013)
 // 원래 파일명과 저장 경로의 대응표. 파일 하나를 쓸 때마다 한 줄씩 이어 쓴다.
 // 엑셀이 한글을 읽으려면 UTF-8 BOM이 필요하다. BOM은 파일을 새로 만들 때만 붙인다.
 
@@ -31,13 +31,14 @@ export function formatStamp(date = new Date()) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
 }
 
-export function logRow(row, date = new Date()) {
+// 파일 객체(source·classification·save)에서 기록표 한 줄을 뽑아낸다. (ADR 0013)
+export function logRow(item, date = new Date()) {
   return [
     formatStamp(date),
-    row.name,
-    row.category,
-    row.target ?? `${row.category}/${row.savedName}`,
-    row.size,
+    item.source.name,
+    item.classification.category,
+    item.save.target ?? `${item.classification.category}/${item.save.savedName}`,
+    item.source.size,
   ]
 }
 
@@ -56,9 +57,9 @@ async function openLogFile(rootHandle, name) {
 }
 
 // 기존 내용 뒤에 이어 쓴다. 같은 날 다시 저장해도 앞의 줄을 지우지 않는다. (ADR 0006)
-export async function appendLog(rootHandle, name, rows, date = new Date()) {
+export async function appendLog(rootHandle, name, items, date = new Date()) {
   const { handle, existed, size } = await openLogFile(rootHandle, name)
-  const body = rows.map((row) => toCsvLine(logRow(row, date))).join(EOL) + EOL
+  const body = items.map((item) => toCsvLine(logRow(item, date))).join(EOL) + EOL
   const chunk = existed ? body : BOM + toCsvLine(LOG_COLUMNS) + EOL + body
 
   const writable = await handle.createWritable({ keepExistingData: true })
