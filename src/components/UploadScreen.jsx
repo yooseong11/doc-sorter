@@ -125,18 +125,20 @@ function UploadScreen({ items, dispatch, classifying, onClassify }) {
             <p className="upload__empty-hint">
               파일을 선택하면 여기에 목록이 나옵니다. PDF · DOCX · HWPX
             </p>
-            <button
-              type="button"
-              className="upload__button"
-              onClick={() => inputRef.current?.click()}
-              disabled={!CAN_PICK_DIRECTORY}
-            >
-              파일 선택
-            </button>
-            <SampleDocumentsButton
-              disabled={!CAN_PICK_DIRECTORY || classifying}
-              onFiles={addFiles}
-            />
+            <div className="upload__empty-actions">
+              <button
+                type="button"
+                className="upload__button"
+                onClick={() => inputRef.current?.click()}
+                disabled={!CAN_PICK_DIRECTORY}
+              >
+                파일 선택
+              </button>
+              <SampleDocumentsButton
+                disabled={!CAN_PICK_DIRECTORY || classifying}
+                onFiles={addFiles}
+              />
+            </div>
           </div>
         ) : (
           <ul className="upload__list">

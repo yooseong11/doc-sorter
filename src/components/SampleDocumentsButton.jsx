@@ -34,10 +34,10 @@ function SampleDocumentsButton({ disabled, onFiles }) {
     >
       {loading && <span className="upload__spinner" aria-hidden="true" />}
       {loading
-        ? '샘플 준비 중…'
-        : failed
-          ? '불러오기 실패 · 다시 시도'
-          : '샘플로 바로 해보기'}
+          ? '샘플 준비 중…'
+          : failed
+            ? '불러오기 실패 · 다시 시도'
+          : '샘플 데이터로 바로 실행하기'}
     </button>
   )
 }
