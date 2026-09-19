@@ -1,6 +1,7 @@
 import { extractText } from './extractText.js'
-import { buildClassificationInput, requestClassification } from './classification.js'
-import { UNCLASSIFIED } from './categories.js'
+import { buildClassificationInput } from '../../shared/classifyContract.js'
+import { UNCLASSIFIED } from '../../shared/categories.js'
+import { requestClassification } from './classify.js'
 
 export async function prepareDocument(item, { dispatch, extract = extractText }) {
   dispatch({ type: 'update', id: item.id, patch: { status: 'reading', error: null } })

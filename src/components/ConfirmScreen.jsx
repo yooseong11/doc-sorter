@@ -1,5 +1,6 @@
 import ResultRow from './ResultRow'
-import { GROUP_ORDER, UNCLASSIFIED, hintOf } from '../lib/categories'
+import { UNCLASSIFIED, hintOf } from '../../shared/categories.js'
+import { GROUP_ORDER } from '../lib/categories'
 import './ConfirmScreen.css'
 
 // S2 확인 화면 — 카테고리별로 묶어서 보여주고, 행마다 드롭다운으로 바꾼다. (ADR 0004)

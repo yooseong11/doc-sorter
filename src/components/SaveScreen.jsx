@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import SaveRow from './SaveRow'
-import { GROUP_ORDER, UNCLASSIFIED } from '../lib/categories'
+import { UNCLASSIFIED } from '../../shared/categories.js'
+import { GROUP_ORDER } from '../lib/categories'
 import { logFileName } from '../lib/savePath'
 import { planSaves } from '../lib/savePlan'
 import { saveAll } from '../lib/saveFiles'

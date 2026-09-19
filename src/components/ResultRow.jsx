@@ -1,6 +1,6 @@
 import { useId, useState } from 'react'
 import StatusBadge from './StatusBadge'
-import { CATEGORY_OPTIONS, UNCLASSIFIED } from '../lib/categories'
+import { CATEGORY_OPTIONS, UNCLASSIFIED } from '../../shared/categories.js'
 import { extensionOf, formatSize } from '../lib/fileKind'
 import './ResultRow.css'
 
