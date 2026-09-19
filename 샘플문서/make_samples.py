@@ -145,6 +145,41 @@ def make_injection():
     p.save()
 
 
+def make_logo_design_contract():
+    p = Pdf(os.path.join(OUT, '로고디자인_용역계약서.pdf'))
+    p.title('로고 디자인 용역계약서')
+    p.para('(주)다온테크(이하 "갑")와 새봄디자인(이하 "을")은 로고 디자인 용역에 관하여 다음과 같이 계약을 체결한다.')
+    p.para('제1조 (목적) 본 계약은 갑의 기업 로고를 개발하기 위한 용역의 내용과 조건을 정함을 목적으로 한다.')
+    p.para('제2조 (용역 범위) 을은 로고 시안 3종, 최종 로고 원본 파일 및 활용 가이드를 제작하여 갑에게 납품한다.')
+    p.para('제3조 (계약 기간) 계약 기간은 2026년 9월 20일부터 2026년 10월 31일까지로 한다.')
+    p.para('제4조 (용역 대금) 총 용역 대금은 3,000,000원(부가가치세 별도)으로 한다.')
+    p.para('제5조 (검수와 수정) 갑은 시안을 검토한 뒤 수정 의견을 전달하며, 을은 계약 범위 안에서 이를 반영한다.')
+    p.para('제6조 (저작권) 최종 대금 지급 후 확정된 결과물의 재산권은 갑에게 이전된다.')
+    p.para('제7조 (비밀유지) 양 당사자는 업무 중 알게 된 상대방의 정보를 제3자에게 누설하지 않는다.')
+    p.save()
+
+
+def make_book_welfare_request():
+    doc = Document()
+    style = doc.styles['Normal']
+    style.font.name = 'Arial'
+    style.font.size = Pt(11)
+
+    doc.add_heading('복지포인트 도서구입 신청서', level=1)
+    doc.add_paragraph('신청자: 정호연')
+    doc.add_paragraph('소속: 경영지원팀')
+    doc.add_paragraph('신청일: 2026년 9월 19일')
+    doc.add_paragraph('신청 구분: 자기계발 도서 구입')
+    doc.add_paragraph('도서명: 실무자를 위한 업무 자동화')
+    doc.add_paragraph('구입 금액: 32,000원')
+    doc.add_paragraph('사용 포인트: 복지포인트 32,000P')
+    doc.add_paragraph('신청 사유: 반복 업무를 줄이고 문서 처리 역량을 높이기 위한 업무 관련 도서를 구입하고자 합니다.')
+    doc.add_paragraph('위와 같이 복지포인트 사용을 신청합니다.')
+    doc.add_paragraph('신청자 서명: 정호연')
+    doc.add_paragraph('승인자 서명: ____________________')
+    doc.save(os.path.join(OUT, '복지포인트_도서구입_신청서.docx'))
+
+
 def make_combined_receipts():
     p = Pdf(os.path.join(OUT, '스캔본_영수증_3장_합본.pdf'))
     p.title('영수증 (1/3)')
@@ -354,6 +389,8 @@ def main():
     make_pension_notice()
     make_kakaotalk()
     make_injection()
+    make_logo_design_contract()
+    make_book_welfare_request()
     make_combined_receipts()
     make_broken_pdf()
     make_6000char_docx()

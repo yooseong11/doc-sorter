@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import FileRow from './FileRow'
+import SampleDocumentsButton from './SampleDocumentsButton'
 import { createDocument } from '../lib/state/documentsReducer'
 import { prepareDocument } from '../lib/state/runDocuments'
 import { supportsDirectoryPicker } from '../lib/save/saveFolder'
@@ -16,13 +17,17 @@ function UploadScreen({ items, dispatch, classifying, onClassify }) {
   const reading = items.some((item) => item.classification.phase === 'reading')
   const canClassify = CAN_PICK_DIRECTORY && items.length > 0 && !reading && !classifying
 
+  function addFiles(files) {
+    if (!CAN_PICK_DIRECTORY || classifying) return
+    const added = files.map((file) => createDocument(file, crypto.randomUUID()))
+    dispatch({ type: 'add', items: added })
+    for (const item of added) void prepareDocument(item, { dispatch })
+  }
+
   function handlePick(event) {
     const picked = Array.from(event.target.files ?? [])
     event.target.value = ''
-    if (!CAN_PICK_DIRECTORY || classifying) return
-    const added = picked.map((file) => createDocument(file, crypto.randomUUID()))
-    dispatch({ type: 'add', items: added })
-    for (const item of added) void prepareDocument(item, { dispatch })
+    addFiles(picked)
   }
 
   function handleRemove(id) {
@@ -128,6 +133,10 @@ function UploadScreen({ items, dispatch, classifying, onClassify }) {
             >
               파일 선택
             </button>
+            <SampleDocumentsButton
+              disabled={!CAN_PICK_DIRECTORY || classifying}
+              onFiles={addFiles}
+            />
           </div>
         ) : (
           <ul className="upload__list">
