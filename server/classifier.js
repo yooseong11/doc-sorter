@@ -1,6 +1,6 @@
 import OpenAI from 'openai'
-import { CATEGORIES, CATEGORY_OPTIONS } from '../src/lib/categories.js'
-import { normalizeClassification, MAX_QUOTE_CHARS } from '../src/lib/classification.js'
+import { CATEGORIES, CATEGORY_OPTIONS } from '../shared/categories.js'
+import { normalizeClassification, MAX_QUOTE_CHARS } from '../shared/classifyContract.js'
 
 const JSON_SCHEMA = {
   name: 'document_classification',

@@ -1,5 +1,5 @@
 import * as v from 'valibot'
-import { inputSchema } from '../src/lib/classification.js'
+import { inputSchema } from '../shared/classifyContract.js'
 import { createClassifier } from '../server/classifier.js'
 
 export function createHandler(getClassifier = () => createClassifier(process.env)) {

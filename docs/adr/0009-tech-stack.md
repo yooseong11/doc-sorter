@@ -4,7 +4,7 @@
 React + JS, Vite, Vercel Functions, Valibot, pdfjs-dist(지연 로드), mammoth, jszip, idb-keyval, node --test. 분류 제공자는 `openai`(Structured Outputs), `deepseek`(json_object + 추론 끄기), `openai-compatible`(Structured Outputs) 세 가지를 서버 어댑터에서 지원한다.
 
 ## 이유
-브라우저에서 원본을 처리한다(0008). PDF.js는 사용자 기반·유지보수와 페이지 제어, Mammoth는 순수 텍스트 추출 API, JSZip은 내부 파일 접근의 편의성과 수용 가능한 크기로 선택한다. Valibot은 외부 데이터 경계만 실행 중 검사해 실패하면 미분류로 보낸다. 제공자를 서버 어댑터 한 곳에 모으면 브라우저는 `/api/classify`만 알면 되고, 어떤 모델을 쓰든 카테고리 검증은 서버의 `normalizeClassification`이 마지막으로 막는다.
+브라우저에서 원본을 처리한다(0008). PDF.js는 사용자 기반·유지보수와 페이지 제어, Mammoth는 순수 텍스트 추출 API, JSZip은 내부 파일 접근의 편의성과 수용 가능한 크기로 선택한다. Valibot은 외부 데이터 경계만 실행 중 검사해 실패하면 미분류로 보낸다. 제공자를 서버 어댑터 한 곳에 모으면 브라우저는 `/api/classify`만 알면 되고, 어떤 모델을 쓰든 카테고리 검증은 shared의 `normalizeClassification`을 서버와 브라우저가 각각 불러 2겹으로 막는다(0016).
 
 ## 버린 대안
 - TypeScript, jsconfig + checkJs 전체 검사: 설정·빌드가 번거롭고 경고가 많다.
