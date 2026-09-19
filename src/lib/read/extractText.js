@@ -3,8 +3,8 @@ import { MAX_TEXT_CHARS } from '../../../shared/classifyContract.js'
 
 // R1은 PDF·DOCX. HWPX 추출기는 R2에서 추가한다.
 export const extractors = {
-  pdf: async (file) => (await import('./extractors/pdf.js')).extractPdfText(file),
-  docx: async (file) => (await import('./extractors/docx.js')).extractDocxText(file),
+  pdf: async (file) => (await import('./pdf.js')).extractPdfText(file),
+  docx: async (file) => (await import('./docx.js')).extractDocxText(file),
 }
 export async function extractText(file, readers = extractors) {
   const reader = readers[extensionOf(file.name)]
