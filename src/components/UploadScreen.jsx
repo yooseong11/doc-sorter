@@ -13,7 +13,7 @@ const ACCEPT = '.pdf,.docx,.hwpx,.hwp,.doc'
 
 function UploadScreen({ items, dispatch, classifying, onClassify }) {
   const inputRef = useRef(null)
-  const reading = items.some((item) => item.status === 'reading')
+  const reading = items.some((item) => item.classification.phase === 'reading')
   const canClassify = CAN_PICK_DIRECTORY && items.length > 0 && !reading && !classifying
 
   function handlePick(event) {
@@ -132,7 +132,7 @@ function UploadScreen({ items, dispatch, classifying, onClassify }) {
         ) : (
           <ul className="upload__list">
             {items.map((item) => (
-              <FileRow key={item.id} item={item} onRemove={handleRemove} disabled={classifying || !CAN_PICK_DIRECTORY} />
+              <FileRow key={item.source.id} item={item} onRemove={handleRemove} disabled={classifying || !CAN_PICK_DIRECTORY} />
             ))}
           </ul>
         )}

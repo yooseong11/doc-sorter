@@ -8,14 +8,18 @@ import './ResultRow.css'
 // 확신이 없는 항목(미분류 · 분류 실패)만 펼친 채로 시작한다.
 
 function ResultRow({ item, onChangeCategory, onRetry, disabled }) {
-  const needsReview = item.status === 'failed' || item.category === UNCLASSIFIED
+  const { id, file, name, size } = item.source
+  const { phase, error, category, quote } = item.classification
+  const failed = phase.endsWith('-failed')
+  const status = failed ? 'failed' : phase
+  const needsReview = failed || category === UNCLASSIFIED
   const [open, setOpen] = useState(needsReview)
   const bodyId = useId()
-  const ext = extensionOf(item.name) || 'file'
+  const ext = extensionOf(name) || 'file'
 
   function handlePreview() {
     // 파일이 이미 브라우저에 있어서 서버 없이 바로 띄운다. (ADR 0004)
-    const url = URL.createObjectURL(item.file)
+    const url = URL.createObjectURL(file)
     window.open(url, '_blank', 'noopener')
     setTimeout(() => URL.revokeObjectURL(url), 60000)
   }
@@ -51,7 +55,7 @@ function ResultRow({ item, onChangeCategory, onRetry, disabled }) {
           </span>
 
           <span className="result-row__main">
-            <span className="result-row__name" title={item.name}>
+            <span className="result-row__name" title={name}>
               {needsReview && (
                 <span className="result-row__warn" role="img" aria-label="확인 필요">
                   <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
@@ -71,27 +75,27 @@ function ResultRow({ item, onChangeCategory, onRetry, disabled }) {
                   </svg>
                 </span>
               )}
-              {item.name}
+              {name}
             </span>
             <span className="result-row__meta">
-              {formatSize(item.size)} · {ext.toUpperCase()} 문서
+              {formatSize(size)} · {ext.toUpperCase()} 문서
             </span>
           </span>
 
         </button>
 
         <div className="result-row__side">
-          {['failed', 'reading', 'classifying'].includes(item.status) && (
-            <StatusBadge status={item.status} title={item.error} />
+          {['failed', 'reading', 'classifying'].includes(status) && (
+            <StatusBadge status={status} title={error} />
           )}
 
           <span className="result-row__select-wrap">
             <select
               className="result-row__select"
-              value={item.category}
+              value={category}
               disabled={disabled}
-              aria-label={`${item.name} 카테고리`}
-              onChange={(event) => onChangeCategory(item.id, event.target.value)}
+              aria-label={`${name} 카테고리`}
+              onChange={(event) => onChangeCategory(id, event.target.value)}
             >
               {CATEGORY_OPTIONS.map((name) => (
                 <option key={name} value={name}>
@@ -117,28 +121,28 @@ function ResultRow({ item, onChangeCategory, onRetry, disabled }) {
 
       {open && (
         <div className="result-row__body" id={bodyId}>
-          {item.status === 'failed' ? (
+          {failed ? (
             // 실패는 사유를 적고 그 파일만 다시 보낸다. (ADR 0013)
             <p className="result-row__note">
-              {item.error ?? '분류하지 못했습니다.'}
+              {error ?? '분류하지 못했습니다.'}
               <button
                 type="button"
                 className="result-row__link"
-                onClick={() => onRetry(item.id)}
+                onClick={() => onRetry(id)}
                 disabled={disabled}
               >
                 다시 시도
               </button>
             </p>
-          ) : item.quote ? (
-            <blockquote className="result-row__quote">{item.quote}</blockquote>
+          ) : quote ? (
+            <blockquote className="result-row__quote">{quote}</blockquote>
           ) : (
             <p className="result-row__note">
               분류할 근거를 찾지 못했습니다. 카테고리를 직접 골라 주세요.
             </p>
           )}
 
-          {item.file && (
+          {file && (
             <button
               type="button"
               className="result-row__link"

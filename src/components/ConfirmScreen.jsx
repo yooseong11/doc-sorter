@@ -9,15 +9,17 @@ import './ConfirmScreen.css'
 function ConfirmScreen({ items: rows, dispatch, busy, onRetry, onBack, onNext }) {
   const groups = GROUP_ORDER.map((name) => ({
     name,
-    rows: rows.filter((row) => row.category === name),
+    rows: rows.filter((row) => row.classification.category === name),
   })).filter((group) => group.rows.length > 0)
 
   const reviewCount = rows.filter(
-    (row) => row.status === 'failed' || row.category === UNCLASSIFIED,
+    (row) => row.classification.phase.endsWith('-failed')
+      || row.classification.category === UNCLASSIFIED,
   ).length
 
   const allUnclassified =
-    rows.length > 0 && rows.every((row) => row.category === UNCLASSIFIED)
+    rows.length > 0
+    && rows.every((row) => row.classification.category === UNCLASSIFIED)
 
   function handleChangeCategory(id, category) {
     if (!busy) dispatch({ type: 'category', id, category })
@@ -79,7 +81,7 @@ function ConfirmScreen({ items: rows, dispatch, busy, onRetry, onBack, onNext })
               <ul className="confirm__list">
                 {group.rows.map((row) => (
                   <ResultRow
-                    key={row.id}
+                    key={row.source.id}
                     item={row}
                     onChangeCategory={handleChangeCategory}
                     onRetry={onRetry}

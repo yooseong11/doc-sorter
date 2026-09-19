@@ -13,11 +13,11 @@ function App() {
   const running = useRef(false)
 
   async function runClassification(id) {
-    if (running.current || items.some((item) => item.status === 'reading')) return
+    if (running.current || items.some((item) => item.classification.phase === 'reading')) return
     running.current = true
     setBusy(true)
     try {
-      await classifyDocuments(id ? items.filter((item) => item.id === id) : items, {
+      await classifyDocuments(id ? items.filter((item) => item.source.id === id) : items, {
         dispatch, retry: Boolean(id),
       })
       setScreen('s2')
