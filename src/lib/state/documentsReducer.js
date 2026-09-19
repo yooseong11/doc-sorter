@@ -1,4 +1,4 @@
-import { UNCLASSIFIED, CATEGORY_OPTIONS } from '../../shared/categories.js'
+import { UNCLASSIFIED, CATEGORY_OPTIONS } from '../../../shared/categories.js'
 
 export function createDocument(file, id) {
   return { id, file, name: file.name, size: file.size, status: 'reading', readable: true, text: '', category: UNCLASSIFIED, quote: '', saveStatus: 'waiting' }

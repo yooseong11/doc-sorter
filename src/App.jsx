@@ -2,8 +2,8 @@ import { useReducer, useRef, useState } from 'react'
 import UploadScreen from './components/UploadScreen'
 import ConfirmScreen from './components/ConfirmScreen'
 import SaveScreen from './components/SaveScreen'
-import { documentsReducer } from './lib/documents'
-import { classifyDocuments } from './lib/documentFlow'
+import { documentsReducer } from './lib/state/documentsReducer'
+import { classifyDocuments } from './lib/state/runDocuments'
 import './App.css'
 
 function App() {

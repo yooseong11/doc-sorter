@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import FileRow from './FileRow'
-import { createDocument } from '../lib/documents'
-import { prepareDocument } from '../lib/documentFlow'
+import { createDocument } from '../lib/state/documentsReducer'
+import { prepareDocument } from '../lib/state/runDocuments'
 import { supportsDirectoryPicker } from '../lib/save/saveFolder'
 import './UploadScreen.css'
 
