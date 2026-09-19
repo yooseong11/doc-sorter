@@ -18,7 +18,10 @@ export function toQuote(value) {
 }
 
 export function buildClassificationInput(item) {
-  return { name: item.name, text: item.text.slice(0, MAX_TEXT_CHARS) }
+  return {
+    name: item.source.name,
+    text: item.classification.text.slice(0, MAX_TEXT_CHARS),
+  }
 }
 
 // 서버와 브라우저가 각각 부른다. 2겹으로 막는다. (ADR 0009, 0016)
