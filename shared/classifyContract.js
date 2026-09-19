@@ -1,5 +1,5 @@
 // 분류 요청·응답의 공유 계약. 브라우저와 서버가 각각 여기만 본다. (ADR 0016)
-// fetch는 이 파일에 두지 않는다. 브라우저 어댑터(src/lib/classify.js)의 몫이다.
+// fetch는 이 파일에 두지 않는다. 브라우저 어댑터(src/lib/classify/classify.js)의 몫이다.
 import * as v from 'valibot'
 import { CATEGORY_OPTIONS, UNCLASSIFIED } from './categories.js'
 

@@ -75,14 +75,14 @@ DeepSeek은 strict `json_schema`를 `"This response_format type is unavailable n
 
 ## 로직과 테스트
 
-- `src/lib/documents.js`: 파일 상태 reducer
-- `src/lib/extractText.js`, `src/lib/extractors/`: 브라우저 텍스트 추출
-- `src/lib/documentFlow.js`: 읽기·분류·실패분 재시도
-- `src/lib/classification.js`: 요청 구성·응답 검증·자체 API 호출
-- `src/lib/directory.js`: 최상위 폴더 선택·권한·핸들 기억
-- `src/lib/savePlan.js`: 저장될 이름·경로 결정과 `_2` 충돌 처리
-- `src/lib/saveFiles.js`: 카테고리 폴더에 쓰기와 실패 격리
-- `src/lib/logCsv.js`: 분류기록표 이어 쓰기
+- `src/lib/state/documentsReducer.js`: 파일 상태 reducer
+- `src/lib/read/`: 파일 형식 판별과 브라우저 텍스트 추출
+- `src/lib/state/runDocuments.js`: 읽기·분류·실패분 재시도
+- `src/lib/classify/classify.js`: 자체 API 호출 어댑터
+- `src/lib/save/saveFolder.js`: 최상위 폴더 선택·권한·핸들 기억
+- `src/lib/save/savePlan.js`: 저장될 이름·경로 결정과 `_2` 충돌 처리
+- `src/lib/save/saveFiles.js`: 카테고리 폴더에 쓰기와 실패 격리
+- `src/lib/save/logCsv.js`: 분류기록표 이어 쓰기
 - `server/classifier.js`: 서버 전용 제공자 설정과 호출 어댑터
 - `api/classify.js`: 입력 검증과 HTTP 응답
 
