@@ -15,7 +15,7 @@ import {
 import './SaveScreen.css'
 
 // S3 저장 화면 — 최상위 폴더를 고르고 카테고리 폴더에 넣은 뒤 기록표를 남긴다.
-// 성공분은 되돌리지 않고 실패분만 다시 시도한다. (ADR 0011)
+// 성공분은 되돌리지 않고 실패분만 다시 시도한다. (ADR 0011 · 0013)
 // 미분류도 예외 없이 `미분류` 폴더에 넣는다. (ADR 0014)
 
 function SaveScreen({ items, dispatch, onBack, onRestart }) {
@@ -26,12 +26,12 @@ function SaveScreen({ items, dispatch, onBack, onRestart }) {
   const alive = useRef(true)
   const logName = logFileName()
 
-  const savedCount = items.filter((item) => item.saveStatus === 'saved').length
-  const failedCount = items.filter((item) => item.saveStatus === 'failed').length
+  const savedCount = items.filter((item) => item.save.phase === 'saved').length
+  const failedCount = items.filter((item) => item.save.phase.endsWith('-failed')).length
 
   const folders = GROUP_ORDER.map((name) => ({
     name,
-    count: items.filter((item) => item.category === name).length,
+    count: items.filter((item) => item.classification.category === name).length,
   })).filter((group) => group.count > 0)
 
   // StrictMode는 effect를 두 번 실행한다. 되살리는 것도 여기서 해야 한다.
@@ -86,7 +86,7 @@ function SaveScreen({ items, dispatch, onBack, onRestart }) {
     setPhase('saving')
 
     const onRow = (id, patch) => {
-      if (alive.current) dispatch({ type: 'update', id, patch })
+      if (alive.current) dispatch({ type: 'save', id, patch })
     }
     try {
       // 저장될 이름을 먼저 목록에 반영한다. 대기 중인 줄에도 `_2`가 보인다. (ADR 0005)
@@ -101,7 +101,7 @@ function SaveScreen({ items, dispatch, onBack, onRestart }) {
   // 재시도는 실패한 파일만. 저장된 파일은 그대로 둔다. (ADR 0011)
   async function handleRetryFailed(id) {
     const failed = items.filter(
-      (item) => item.saveStatus === 'failed' && (!id || item.id === id),
+      (item) => item.save.phase.endsWith('-failed') && (!id || item.source.id === id),
     )
     await runSave(failed)
   }
@@ -198,7 +198,7 @@ function SaveScreen({ items, dispatch, onBack, onRestart }) {
         <section className="save__list-card">
           <ul className="save__list">
             {items.map((row) => (
-              <SaveRow key={row.id} item={row} onRetry={handleRetryFailed} />
+              <SaveRow key={row.source.id} item={row} onRetry={handleRetryFailed} />
             ))}
           </ul>
         </section>
