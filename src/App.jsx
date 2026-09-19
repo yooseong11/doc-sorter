@@ -32,6 +32,23 @@ function App() {
       {screen === 's1' && <UploadScreen items={items} dispatch={dispatch} classifying={busy} onClassify={() => runClassification()} />}
       {screen === 's2' && <ConfirmScreen items={items} dispatch={dispatch} busy={busy} onRetry={runClassification} onBack={() => setScreen('s1')} onNext={() => setScreen('s3')} />}
       {screen === 's3' && <SaveScreen items={items} dispatch={dispatch} onBack={() => setScreen('s2')} onRestart={() => { dispatch({ type: 'reset' }); setScreen('s1') }} />}
+
+      <a
+        className="app__github-link"
+        href="https://github.com/yooseong11/doc-sorter"
+        target="_blank"
+        rel="noreferrer"
+      >
+        <span className="app__github-icon" aria-hidden="true">
+          <svg viewBox="0 0 19 19" width="20" height="20">
+            <use href="/icons.svg#github-icon" />
+          </svg>
+        </span>
+        <span className="app__github-copy">
+          <strong>제작 과정 살펴보기</strong>
+          <span>기획·AI활용방법·코드를 구경해보세요!</span>
+        </span>
+      </a>
     </div>
   )
 }
