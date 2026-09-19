@@ -1,10 +1,10 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { LOG_COLUMNS, appendLog, toCsvField, toCsvLine, formatStamp, logRow } from '../src/lib/logCsv.js'
-import { planSaves, takenNames, uniqueName } from '../src/lib/savePlan.js'
-import { saveAll, writeDocument, LOG_ERROR } from '../src/lib/saveFiles.js'
-import { ensurePermission, folderLabel, pickRootDirectory, supportsDirectoryPicker } from '../src/lib/directory.js'
-import { logFileName } from '../src/lib/savePath.js'
+import { LOG_COLUMNS, appendLog, toCsvField, toCsvLine, formatStamp, logRow } from '../src/lib/save/logCsv.js'
+import { planSaves, takenNames, uniqueName } from '../src/lib/save/savePlan.js'
+import { saveAll, writeDocument, LOG_ERROR } from '../src/lib/save/saveFiles.js'
+import { ensurePermission, folderLabel, pickRootDirectory, supportsDirectoryPicker } from '../src/lib/save/saveFolder.js'
+import { logFileName } from '../src/lib/save/savePath.js'
 
 // 브라우저 File System Access API를 흉내 낸 메모리 폴더.
 // 쓰기 직전 존재 확인·이어 쓰기·실패 격리를 DOM 없이 검증하려고 만든다.

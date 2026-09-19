@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import FileRow from './FileRow'
 import { createDocument } from '../lib/documents'
 import { prepareDocument } from '../lib/documentFlow'
-import { supportsDirectoryPicker } from '../lib/directory'
+import { supportsDirectoryPicker } from '../lib/save/saveFolder'
 import './UploadScreen.css'
 
 // 폴더 선택 API가 없으면 첫 화면에서 막는다. (ADR 0012)

@@ -2,16 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import SaveRow from './SaveRow'
 import { UNCLASSIFIED } from '../../shared/categories.js'
 import { GROUP_ORDER } from '../lib/categories'
-import { logFileName } from '../lib/savePath'
-import { planSaves } from '../lib/savePlan'
-import { saveAll } from '../lib/saveFiles'
+import { logFileName } from '../lib/save/savePath'
+import { planSaves } from '../lib/save/savePlan'
+import { saveAll } from '../lib/save/saveFiles'
 import {
   ensurePermission,
   folderLabel,
   pickRootDirectory,
   recallDirectory,
   rememberDirectory,
-} from '../lib/directory'
+} from '../lib/save/saveFolder'
 import './SaveScreen.css'
 
 // S3 저장 화면 — 최상위 폴더를 고르고 카테고리 폴더에 넣은 뒤 기록표를 남긴다.
