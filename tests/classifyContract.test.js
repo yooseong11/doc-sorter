@@ -8,10 +8,17 @@ import { extractText } from '../src/lib/read/extractText.js'
 import { createClassifier, readAIConfig } from '../server/classifier.js'
 import { createHandler } from '../api/classify.js'
 
-const document = (id) => ({ ...createDocument({ name: `${id}.pdf`, size: 10 }, id), status: 'waiting', text: '분류할 문서 내용입니다.' })
+// 읽기까지 끝나 분류 대기 중인 문서. (ADR 0013)
+const document = (id, over = {}) => {
+  const item = createDocument({ name: `${id}.pdf`, size: 10 }, id)
+  return {
+    ...item,
+    classification: { ...item.classification, phase: 'ready', text: '분류할 문서 내용입니다.', ...over },
+  }
+}
 
 test('전송 데이터에는 이름과 제한된 앞부분만 포함한다', () => {
-  const input = buildClassificationInput({ ...document('a'), text: '가'.repeat(10000), secret: 'private' })
+  const input = buildClassificationInput(document('a', { text: '가'.repeat(10000) }))
   assert.deepEqual(Object.keys(input), ['name', 'text'])
   assert.equal(input.text.length, MAX_TEXT_CHARS)
 })
@@ -32,7 +39,7 @@ test('인용문은 상한까지 자르고 값이 이상하면 카테고리만 �
   }
 })
 test('파일별 실패를 격리하고 미지원 파일은 API를 호출하지 않는다', async () => {
-  let rows = [document('a'), document('b'), { ...document('c'), readable: false }]
+  let rows = [document('a'), document('b'), document('c', { readable: false })]
   const calls = []
   const dispatch = (action) => { rows = documentsReducer(rows, action) }
   await classifyDocuments(rows, { dispatch, classify: async (input) => {
@@ -41,14 +48,14 @@ test('파일별 실패를 격리하고 미지원 파일은 API를 호출하지 �
     return { category: '계약서' }
   } })
   assert.deepEqual(calls, ['a.pdf', 'b.pdf'])
-  assert.deepEqual(rows.map((row) => row.status), ['failed', 'classified', 'classified'])
+  assert.deepEqual(rows.map((row) => row.classification.phase), ['classify-failed', 'classified', 'classified'])
   rows = documentsReducer(rows, { type: 'category', id: 'b', category: '근태' })
   await classifyDocuments(rows, { dispatch, retry: true, classify: async (input) => {
     calls.push(input.name)
     return { category: '복지 신청' }
   } })
   assert.deepEqual(calls, ['a.pdf', 'b.pdf', 'a.pdf'])
-  assert.equal(rows[1].category, '근태')
+  assert.equal(rows[1].classification.category, '근태')
 })
 test('삭제한 파일은 늦게 끝난 추출 결과로 돌아오지 않는다', async () => {
   let rows = [document('a')]
@@ -64,9 +71,9 @@ test('읽기 실패 재시도는 파일부터 다시 읽는다', async () => {
   let rows = [document('a')]
   const dispatch = (action) => { rows = documentsReducer(rows, action) }
   await prepareDocument(rows[0], { dispatch, extract: async () => { throw new Error('corrupt') } })
-  assert.equal(rows[0].failedStage, 'read')
+  assert.equal(rows[0].classification.phase, 'read-failed')
   await classifyDocuments(rows, { dispatch, retry: true, extract: async () => ({ readable: true, text: '복구된 문서의 내용입니다.' }), classify: async () => ({ category: '계약서' }) })
-  assert.equal(rows[0].status, 'classified')
+  assert.equal(rows[0].classification.phase, 'classified')
 })
 test('미지원 형식과 텍스트 부족은 읽을 수 없음으로 반환한다', async () => {
   assert.equal((await extractText({ name: 'a.hwp' }, {})).reason, 'unsupported-format')

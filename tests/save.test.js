@@ -86,14 +86,29 @@ function makeRoot(initial = {}) {
   return { handle: dirHandle(''), files, dirs }
 }
 
-const row = (over = {}) => ({
-  id: over.id ?? 'a',
-  name: '출장정산_영수증.pdf',
-  size: 10,
-  category: '비용 증빙',
-  file: 'binary',
-  saveStatus: 'waiting',
-  ...over,
+// 분류까지 끝나고 저장을 기다리는 문서. (ADR 0013)
+const item = (over = {}) => ({
+  source: {
+    id: over.id ?? 'a',
+    name: over.name ?? '출장정산_영수증.pdf',
+    size: over.size ?? 10,
+    file: over.file ?? 'binary',
+  },
+  classification: {
+    phase: 'classified',
+    error: null,
+    readable: true,
+    text: '',
+    category: over.category ?? '비용 증빙',
+    quote: '',
+  },
+  save: {
+    phase: over.phase ?? 'waiting',
+    error: over.error ?? null,
+    savedName: over.savedName ?? null,
+    target: over.target ?? null,
+    renamed: over.renamed ?? false,
+  },
 })
 
 test('같은 이름이 없으면 그대로, 있으면 _2 _3 을 붙인다', () => {
@@ -120,36 +135,36 @@ test('폴더 안 기존 파일만 충돌로 보고 하위 폴더는 세지 않�
 
 test('저장 계획은 기존 파일과 같은 배치 안 중복을 모두 피한다', async () => {
   const { handle, dirs } = makeRoot({ '비용 증빙/출장정산_영수증.pdf': 'x' })
-  const rows = [
-    row({ id: 'a' }),
-    row({ id: 'b' }),
-    row({ id: 'c', name: '전자세금계산서.pdf' }),
+  const items = [
+    item({ id: 'a' }),
+    item({ id: 'b' }),
+    item({ id: 'c', name: '전자세금계산서.pdf' }),
   ]
-  const planned = await planSaves(rows, handle)
+  const planned = await planSaves(items, handle)
 
-  assert.deepEqual(planned.map((r) => r.savedName), [
+  assert.deepEqual(planned.map((r) => r.save.savedName), [
     '출장정산_영수증_2.pdf',
     '출장정산_영수증_3.pdf',
     '전자세금계산서.pdf',
   ])
-  assert.deepEqual(planned.map((r) => r.renamed), [true, true, false])
-  assert.equal(planned[0].target, '비용 증빙/출장정산_영수증_2.pdf')
+  assert.deepEqual(planned.map((r) => r.save.renamed), [true, true, false])
+  assert.equal(planned[0].save.target, '비용 증빙/출장정산_영수증_2.pdf')
   // 계획 단계에서는 폴더를 만들지 않는다.
   assert.deepEqual([...dirs], ['', '비용 증빙'])
 })
 
-test('이미 저장된 행은 계획을 다시 세워도 이름이 그대로다', async () => {
+test('이미 저장된 항목은 계획을 다시 세워도 이름이 그대로다', async () => {
   const { handle, files } = makeRoot({ '비용 증빙/출장정산_영수증_2.pdf': 'x' })
-  const rows = [row({ id: 'a', savedName: '출장정산_영수증_2.pdf', saveStatus: 'saved' })]
-  const planned = await planSaves(rows, handle)
+  const items = [item({ id: 'a', savedName: '출장정산_영수증_2.pdf', phase: 'saved' })]
+  const planned = await planSaves(items, handle)
 
-  assert.equal(planned[0].savedName, '출장정산_영수증_2.pdf')
+  assert.equal(planned[0].save.savedName, '출장정산_영수증_2.pdf')
   assert.equal(files.size, 1)
 })
 
 test('파일을 쓸 때 이름을 다시 확인해 덮어쓰지 않는다', async () => {
   const { handle, files } = makeRoot({ '비용 증빙/출장정산_영수증.pdf': '기존' })
-  const result = await writeDocument(row(), handle)
+  const result = await writeDocument(item(), handle)
 
   assert.equal(result.ok, true)
   assert.equal(result.savedName, '출장정산_영수증_2.pdf')
@@ -159,7 +174,7 @@ test('파일을 쓸 때 이름을 다시 확인해 덮어쓰지 않는다', asyn
 
 test('미분류도 예외 없이 같은 이름의 폴더에 들어간다', async () => {
   const { handle, files } = makeRoot()
-  const result = await writeDocument(row({ category: '미분류', name: '사내동호회_지원.hwp' }), handle)
+  const result = await writeDocument(item({ category: '미분류', name: '사내동호회_지원.hwp' }), handle)
 
   assert.equal(result.target, '미분류/사내동호회_지원.hwp')
   assert.equal(files.get('미분류/사내동호회_지원.hwp'), 'binary')
@@ -167,50 +182,50 @@ test('미분류도 예외 없이 같은 이름의 폴더에 들어간다', async
 
 test('중간에 실패해도 끝까지 돌고 성공분은 되돌리지 않는다', async () => {
   const { handle } = makeRoot()
-  const rows = [row({ id: 'a' }), row({ id: 'b' }), row({ id: 'c' }), row({ id: 'd' })]
+  const items = [item({ id: 'a' }), item({ id: 'b' }), item({ id: 'c' }), item({ id: 'd' })]
   const written = []
   const states = new Map()
   const logCalls = []
 
-  await saveAll(rows, {
+  await saveAll(items, {
     rootHandle: handle,
     logName: '분류기록표_260918.csv',
     onRow: (id, patch) => states.set(id, { ...states.get(id), ...patch }),
     write: async (target) => {
-      if (target.id === 'b') return { ok: false, error: '권한이 회수되어 쓰지 못했습니다.' }
-      written.push(target.id)
-      return { ok: true, savedName: target.name, renamed: false, target: `비용 증빙/${target.name}` }
+      if (target.source.id === 'b') return { ok: false, error: '권한이 회수되어 쓰지 못했습니다.' }
+      written.push(target.source.id)
+      return { ok: true, savedName: target.source.name, renamed: false, target: `비용 증빙/${target.source.name}` }
     },
-    log: async (root, name, logged) => { logCalls.push(...logged.map((r) => r.id)) },
+    log: async (root, name, logged) => { logCalls.push(...logged.map((r) => r.source.id)) },
   })
 
   // 실패한 b 뒤의 c·d도 계속 처리한다.
   assert.deepEqual(written, ['a', 'c', 'd'])
   assert.deepEqual(logCalls, ['a', 'c', 'd'])
-  assert.equal(states.get('a').saveStatus, 'saved')
-  assert.equal(states.get('b').saveStatus, 'failed')
-  assert.equal(states.get('d').saveStatus, 'saved')
+  assert.equal(states.get('a').phase, 'saved')
+  assert.equal(states.get('b').phase, 'write-failed')
+  assert.equal(states.get('d').phase, 'saved')
 
   // 재시도는 실패한 파일만 한다.
-  const retry = rows.filter((r) => states.get(r.id).saveStatus === 'failed')
+  const retry = items.filter((it) => states.get(it.source.id).phase === 'write-failed')
   written.length = 0
   await saveAll(await planSaves(retry, handle), {
     rootHandle: handle,
     logName: '분류기록표_260918.csv',
     onRow: (id, patch) => states.set(id, { ...states.get(id), ...patch }),
     write: async (target) => {
-      written.push(target.id)
-      return { ok: true, savedName: target.name, renamed: false, target: `비용 증빙/${target.name}` }
+      written.push(target.source.id)
+      return { ok: true, savedName: target.source.name, renamed: false, target: `비용 증빙/${target.source.name}` }
     },
     log: async () => {},
   })
   assert.deepEqual(written, ['b'])
-  assert.equal(states.get('b').saveStatus, 'saved')
+  assert.equal(states.get('b').phase, 'saved')
 })
 
 test('기록표만 실패한 파일은 재시도 때 파일을 다시 쓰지 않는다', async () => {
   const { handle } = makeRoot()
-  const rows = [row({ id: 'a' })]
+  const items = [item({ id: 'a' })]
   const states = new Map()
   let writes = 0
   let logs = 0
@@ -221,45 +236,48 @@ test('기록표만 실패한 파일은 재시도 때 파일을 다시 쓰지 않
     onRow: (id, patch) => states.set(id, { ...states.get(id), ...patch }),
     write: async (target) => {
       writes += 1
-      return { ok: true, savedName: target.name, renamed: false, target: `비용 증빙/${target.name}` }
+      return { ok: true, savedName: target.source.name, renamed: false, target: `비용 증빙/${target.source.name}` }
     },
   }
 
-  await saveAll(rows, { ...options, log: async () => { logs += 1; throw new Error('quota') } })
-  assert.equal(states.get('a').saveStatus, 'failed')
+  await saveAll(items, { ...options, log: async () => { logs += 1; throw new Error('quota') } })
+  assert.equal(states.get('a').phase, 'log-failed')
   assert.equal(states.get('a').error, LOG_ERROR)
-  assert.equal(states.get('a').fileSaved, true)
 
   // 계획을 다시 세워도 이름이 바뀌지 않고, 파일 쓰기는 건너뛴다.
-  const planned = await planSaves([{ ...rows[0], ...states.get('a') }], handle)
-  assert.equal(planned[0].savedName, '출장정산_영수증.pdf')
+  const merged = { ...items[0], save: { ...items[0].save, ...states.get('a') } }
+  const planned = await planSaves([merged], handle)
+  assert.equal(planned[0].save.savedName, '출장정산_영수증.pdf')
 
   await saveAll(planned, { ...options, log: async () => { logs += 1 } })
   assert.equal(writes, 1)
   assert.equal(logs, 2)
-  assert.equal(states.get('a').saveStatus, 'saved')
-  assert.equal(states.get('a').fileSaved, false)
+  assert.equal(states.get('a').phase, 'saved')
 })
 
 test('저장 시작을 다시 눌러도 이미 저장된 파일은 다시 쓰지 않는다', async () => {
   const { handle } = makeRoot()
-  const rows = [row({ id: 'a' }), row({ id: 'b', name: '전자세금계산서.pdf' })]
-  const states = new Map([['a', { saveStatus: 'saved', savedName: '출장정산_영수증.pdf' }]])
+  const items = [item({ id: 'a' }), item({ id: 'b', name: '전자세금계산서.pdf' })]
+  const states = new Map([['a', { phase: 'saved', savedName: '출장정산_영수증.pdf' }]])
   const written = []
 
-  await saveAll(await planSaves(rows.map((r) => ({ ...r, ...states.get(r.id) })), handle), {
+  const merged = items.map((it) => states.has(it.source.id)
+    ? { ...it, save: { ...it.save, ...states.get(it.source.id) } }
+    : it)
+
+  await saveAll(await planSaves(merged, handle), {
     rootHandle: handle,
     logName: '분류기록표_260918.csv',
     onRow: (id, patch) => states.set(id, { ...states.get(id), ...patch }),
     write: async (target) => {
-      written.push(target.id)
-      return { ok: true, savedName: target.savedName, renamed: false, target: `비용 증빙/${target.savedName}` }
+      written.push(target.source.id)
+      return { ok: true, savedName: target.save.savedName, renamed: false, target: `비용 증빙/${target.save.savedName}` }
     },
     log: async () => {},
   })
 
   assert.deepEqual(written, ['b'])
-  assert.equal(states.get('a').saveStatus, 'saved')
+  assert.equal(states.get('a').phase, 'saved')
 })
 
 test('기록표는 새로 만들 때만 BOM과 헤더를 붙이고 같은 날은 이어 쓴다', async () => {
@@ -267,13 +285,13 @@ test('기록표는 새로 만들 때만 BOM과 헤더를 붙이고 같은 날은
   const name = logFileName(new Date(2026, 8, 18))
   assert.equal(name, '분류기록표_260918.csv')
   const date = new Date(2026, 8, 18, 14, 5, 9)
-  const logged = row({ savedName: '출장정산_영수증_2.pdf', target: '비용 증빙/출장정산_영수증_2.pdf' })
+  const logged = item({ savedName: '출장정산_영수증_2.pdf', target: '비용 증빙/출장정산_영수증_2.pdf' })
 
   await appendLog(handle, name, [logged], date)
   const first = files.get(name)
   assert.equal(first, `\uFEFF${LOG_COLUMNS.join(',')}\r\n2026-09-18 14:05:09,출장정산_영수증.pdf,비용 증빙,비용 증빙/출장정산_영수증_2.pdf,10\r\n`)
 
-  await appendLog(handle, name, [row({ id: 'b', name: '전자세금계산서.pdf' })], date)
+  await appendLog(handle, name, [item({ id: 'b', name: '전자세금계산서.pdf' })], date)
   const second = files.get(name)
   assert.equal(second.split('\uFEFF').length, 2)
   assert.equal(second.split('\r\n').filter(Boolean).length, 3)
@@ -285,7 +303,7 @@ test('비어 있는 기록표에는 헤더와 BOM을 다시 붙인다', async ()
   const date = new Date(2026, 8, 18, 14, 5, 9)
   // 기록표 쓰기가 실패해 0바이트 파일만 남은 상태. (ADR 0011)
   const { handle, files } = makeRoot({ [name]: '' })
-  const logged = row({ savedName: '출장정산_영수증.pdf', target: '비용 증빙/출장정산_영수증.pdf' })
+  const logged = item({ savedName: '출장정산_영수증.pdf', target: '비용 증빙/출장정산_영수증.pdf' })
 
   await appendLog(handle, name, [logged], date)
 
@@ -305,9 +323,13 @@ test('CSV 값은 쉼표·따옴표·줄바꿈을 이스케이프한다', () => {
   assert.equal(toCsvField(undefined), '')
   assert.equal(toCsvLine(['a', 'b,c']), 'a,"b,c"')
   assert.equal(formatStamp(new Date(2026, 0, 2, 3, 4, 5)), '2026-01-02 03:04:05')
-  assert.deepEqual(logRow({ name: 'a.pdf', category: '근태', target: '근태/a.pdf', size: 7 }, new Date(2026, 0, 2, 3, 4, 5)), [
-    '2026-01-02 03:04:05', 'a.pdf', '근태', '근태/a.pdf', 7,
-  ])
+  assert.deepEqual(
+    logRow(
+      { source: { name: 'a.pdf', size: 7 }, classification: { category: '근태' }, save: { target: '근태/a.pdf' } },
+      new Date(2026, 0, 2, 3, 4, 5),
+    ),
+    ['2026-01-02 03:04:05', 'a.pdf', '근태', '근태/a.pdf', 7],
+  )
 })
 
 test('폴더 선택을 취소하거나 권한을 거부하면 null을 돌려준다', async () => {
