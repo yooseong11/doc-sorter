@@ -1,6 +1,6 @@
 // 브라우저 어댑터. /api/classify만 알고, 계약은 shared에서 가져온다. (ADR 0016)
 // 서버가 이미 normalize했지만 응답을 한 겹 더 막는다. 서버도 틀릴 수 있다. (ADR 0009)
-import { normalizeClassification } from '../../shared/classifyContract.js'
+import { normalizeClassification } from '../../../shared/classifyContract.js'
 
 export async function requestClassification(input, fetcher = fetch) {
   const response = await fetcher('/api/classify', {

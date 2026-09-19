@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { buildClassificationInput, normalizeClassification, MAX_TEXT_CHARS, MAX_QUOTE_CHARS } from '../shared/classifyContract.js'
-import { requestClassification } from '../src/lib/classify.js'
+import { requestClassification } from '../src/lib/classify/classify.js'
 import { createDocument, documentsReducer } from '../src/lib/documents.js'
 import { classifyDocuments, prepareDocument } from '../src/lib/documentFlow.js'
 import { extractText } from '../src/lib/read/extractText.js'
