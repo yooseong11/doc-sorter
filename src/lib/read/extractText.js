@@ -1,5 +1,5 @@
 import { extensionOf } from './fileKind.js'
-import { MAX_TEXT_CHARS } from '../../shared/classifyContract.js'
+import { MAX_TEXT_CHARS } from '../../../shared/classifyContract.js'
 
 // R1은 PDF·DOCX. HWPX 추출기는 R2에서 추가한다.
 export const extractors = {

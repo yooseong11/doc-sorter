@@ -1,5 +1,5 @@
 import StatusBadge from './StatusBadge'
-import { extensionOf, formatSize } from '../lib/fileKind'
+import { extensionOf, formatSize } from '../lib/read/fileKind'
 import './FileRow.css'
 
 function FileRow({ item, onRemove, disabled }) {

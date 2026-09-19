@@ -1,5 +1,5 @@
 import StatusBadge from './StatusBadge'
-import { extensionOf, formatSize } from '../lib/fileKind'
+import { extensionOf, formatSize } from '../lib/read/fileKind'
 import './SaveRow.css'
 
 // 저장 화면의 한 줄. 원래 파일명 → 저장될 경로 · 상태 배지. (ADR 0011)

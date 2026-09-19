@@ -1,4 +1,4 @@
-import { extractText } from './extractText.js'
+import { extractText } from './read/extractText.js'
 import { buildClassificationInput } from '../../shared/classifyContract.js'
 import { UNCLASSIFIED } from '../../shared/categories.js'
 import { requestClassification } from './classify.js'

@@ -4,7 +4,7 @@ import { buildClassificationInput, normalizeClassification, MAX_TEXT_CHARS, MAX_
 import { requestClassification } from '../src/lib/classify.js'
 import { createDocument, documentsReducer } from '../src/lib/documents.js'
 import { classifyDocuments, prepareDocument } from '../src/lib/documentFlow.js'
-import { extractText } from '../src/lib/extractText.js'
+import { extractText } from '../src/lib/read/extractText.js'
 import { createClassifier, readAIConfig } from '../server/classifier.js'
 import { createHandler } from '../api/classify.js'
 

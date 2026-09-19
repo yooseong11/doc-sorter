@@ -1,7 +1,7 @@
 import { useId, useState } from 'react'
 import StatusBadge from './StatusBadge'
 import { CATEGORY_OPTIONS, UNCLASSIFIED } from '../../shared/categories.js'
-import { extensionOf, formatSize } from '../lib/fileKind'
+import { extensionOf, formatSize } from '../lib/read/fileKind'
 import './ResultRow.css'
 
 // 확인 화면의 한 줄. 파일명 · 카테고리 드롭다운 · 근거 한 줄. (ADR 0004)
