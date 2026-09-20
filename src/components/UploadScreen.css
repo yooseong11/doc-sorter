@@ -106,6 +106,34 @@
   overflow: hidden;
 }
 
+/* 드롭 중 — 패널 전체가 받는 영역이다 */
+.upload__panel--dragging {
+  border-color: var(--color-accent-line);
+  box-shadow: 0 0 0 2px var(--color-accent-soft), var(--shadow-card);
+}
+
+.upload__dropmask {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-xl);
+  background: var(--color-accent-soft);
+  backdrop-filter: blur(2px);
+  /* 마스크가 드래그 대상이 되면 dragleave가 깜빡인다. 이벤트는 패널이 받는다 */
+  pointer-events: none;
+}
+
+.upload__dropmask-text {
+  padding: var(--space-3) var(--space-5);
+  border: 1px dashed var(--color-accent-line);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-accent-quiet);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
 /* 빈 상태 */
 .upload__empty {
   display: grid;

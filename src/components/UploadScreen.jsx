@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import FileRow from './FileRow'
 import SampleDocumentsButton from './SampleDocumentsButton'
 import { createDocument } from '../lib/state/documentsReducer'
@@ -11,11 +11,21 @@ import './UploadScreen.css'
 const CAN_PICK_DIRECTORY = supportsDirectoryPicker()
 
 const ACCEPT = '.pdf,.docx,.hwpx,.hwp,.doc'
+const ACCEPT_EXTENSIONS = ACCEPT.split(',')
+
+// 드롭된 파일은 탐색기가 거르지 않으므로 여기서 확장자를 본다.
+// 읽을 수 없는 형식(hwp, doc)도 받는다. 목록에 남겨 미분류로 저장한다. (ADR 0007)
+function isAccepted(file) {
+  const name = file.name.toLowerCase()
+  return ACCEPT_EXTENSIONS.some((extension) => name.endsWith(extension))
+}
 
 function UploadScreen({ items, dispatch, classifying, onClassify }) {
   const inputRef = useRef(null)
+  const [dragging, setDragging] = useState(false)
   const reading = items.some((item) => item.classification.phase === 'reading')
   const canClassify = CAN_PICK_DIRECTORY && items.length > 0 && !reading && !classifying
+  const canDrop = CAN_PICK_DIRECTORY && !classifying
 
   function addFiles(files) {
     if (!CAN_PICK_DIRECTORY || classifying) return
@@ -32,6 +42,27 @@ function UploadScreen({ items, dispatch, classifying, onClassify }) {
 
   function handleRemove(id) {
     if (!classifying) dispatch({ type: 'remove', id })
+  }
+
+  // preventDefault를 빼면 브라우저가 파일을 그대로 열어 화면을 떠난다. 받을 수 없을 때도 막는다.
+  function handleDragOver(event) {
+    event.preventDefault()
+    if (!canDrop) return
+    event.dataTransfer.dropEffect = 'copy'
+    setDragging(true)
+  }
+
+  // 자식 요소로 옮겨갈 때도 dragleave가 뜬다. 패널 밖으로 나갔을 때만 끈다.
+  function handleDragLeave(event) {
+    if (event.currentTarget.contains(event.relatedTarget)) return
+    setDragging(false)
+  }
+
+  function handleDrop(event) {
+    event.preventDefault()
+    setDragging(false)
+    if (!canDrop) return
+    addFiles(Array.from(event.dataTransfer.files ?? []).filter(isAccepted))
   }
 
   return (
@@ -106,7 +137,12 @@ function UploadScreen({ items, dispatch, classifying, onClassify }) {
         </p>
       )}
 
-      <section className="upload__panel">
+      <section
+        className={`upload__panel${dragging ? ' upload__panel--dragging' : ''}`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         {items.length === 0 ? (
           <div className="upload__empty">
             <div className="upload__empty-mark" aria-hidden="true">
@@ -146,6 +182,12 @@ function UploadScreen({ items, dispatch, classifying, onClassify }) {
               <FileRow key={item.source.id} item={item} onRemove={handleRemove} disabled={classifying || !CAN_PICK_DIRECTORY} />
             ))}
           </ul>
+        )}
+
+        {dragging && (
+          <div className="upload__dropmask" role="status">
+            <span className="upload__dropmask-text">여기에 놓으면 추가됩니다</span>
+          </div>
         )}
       </section>
 
