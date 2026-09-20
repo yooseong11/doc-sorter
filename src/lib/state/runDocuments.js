@@ -1,6 +1,6 @@
 import { extractText } from '../read/extractText.js'
 import { buildClassificationInput } from '../../../shared/classifyContract.js'
-import { UNCLASSIFIED } from '../../../shared/categories.js'
+import { UNCLASSIFIED, categoryPreset } from '../../../shared/categories.js'
 import { requestClassification } from '../classify/classify.js'
 
 function withClassification(item, patch) {
@@ -33,7 +33,8 @@ export async function prepareDocument(item, { dispatch, extract = extractText })
   }
 }
 
-export async function classifyDocuments(items, { dispatch, classify = requestClassification, extract = extractText, retry = false }) {
+// preset은 이번 분류에 쓸 카테고리 목록이다. 안 넘기면 기본 프리셋으로 분류한다. (ADR 0019)
+export async function classifyDocuments(items, { dispatch, classify = requestClassification, extract = extractText, retry = false, preset = categoryPreset() }) {
   for (let item of items) {
     const { phase } = item.classification
     const retryable = phase === 'read-failed' || phase === 'classify-failed'
@@ -52,7 +53,7 @@ export async function classifyDocuments(items, { dispatch, classify = requestCla
     }
     updateClassification(dispatch, item, { phase: 'classifying', error: null })
     try {
-      const result = await classify(buildClassificationInput(item))
+      const result = await classify(buildClassificationInput(item, preset.categories))
       updateClassification(dispatch, item, {
         ...result,
         phase: 'classified',

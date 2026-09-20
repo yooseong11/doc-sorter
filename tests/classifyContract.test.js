@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { buildClassificationInput, normalizeClassification, quoteInText, MAX_TEXT_CHARS, MAX_QUOTE_CHARS } from '../shared/classifyContract.js'
 import { requestClassification } from '../src/lib/classify/classify.js'
 import { createDocument, documentsReducer } from '../src/lib/state/documentsReducer.js'
+import { categoryPreset } from '../shared/categories.js'
 import { classifyDocuments, prepareDocument } from '../src/lib/state/runDocuments.js'
 import { extractText } from '../src/lib/read/extractText.js'
 import { createClassifier, readAIConfig } from '../server/classifier.js'
@@ -67,7 +68,8 @@ test('파일별 실패를 격리하고 미지원 파일은 API를 호출하지 �
   } })
   assert.deepEqual(calls, ['a.pdf', 'b.pdf'])
   assert.deepEqual(rows.map((row) => row.classification.phase), ['classify-failed', 'classified', 'classified'])
-  rows = documentsReducer(rows, { type: 'category', id: 'b', category: '근태' })
+  // 리듀서는 액션에 실려 온 목록으로만 검증한다. 목록이 없으면 바꾸지 않는다. (ADR 0009 · 0019)
+  rows = documentsReducer(rows, { type: 'category', id: 'b', category: '근태', options: categoryPreset().options })
   await classifyDocuments(rows, { dispatch, retry: true, classify: async (input) => {
     calls.push(input.name)
     return { category: '복지 신청' }

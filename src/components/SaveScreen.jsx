@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import SaveRow from './SaveRow'
 import { UNCLASSIFIED } from '../../shared/categories.js'
-import { GROUP_ORDER } from '../groupOrder'
+import { groupOrderOf } from '../groupOrder'
 import { logFileName } from '../lib/save/savePath'
 import { planSaves } from '../lib/save/savePlan'
 import { saveAll } from '../lib/save/saveFiles'
@@ -18,7 +18,7 @@ import './SaveScreen.css'
 // 성공분은 되돌리지 않고 실패분만 다시 시도한다. (ADR 0011 · 0013)
 // 미분류도 예외 없이 `미분류` 폴더에 넣는다. (ADR 0014)
 
-function SaveScreen({ items, dispatch, onBack, onRestart }) {
+function SaveScreen({ items, dispatch, preset, onBack, onRestart }) {
   const [phase, setPhase] = useState('idle')
   const [notice, setNotice] = useState('')
   const [folder, setFolder] = useState('')
@@ -29,7 +29,7 @@ function SaveScreen({ items, dispatch, onBack, onRestart }) {
   const savedCount = items.filter((item) => item.save.phase === 'saved').length
   const failedCount = items.filter((item) => item.save.phase.endsWith('-failed')).length
 
-  const folders = GROUP_ORDER.map((name) => ({
+  const folders = groupOrderOf(preset).map((name) => ({
     name,
     count: items.filter((item) => item.classification.category === name).length,
   })).filter((group) => group.count > 0)

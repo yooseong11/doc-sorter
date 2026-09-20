@@ -1,4 +1,8 @@
-import { CATEGORY_OPTIONS } from '../shared/categories.js'
+import { categoryPreset } from '../shared/categories.js'
+
+// 샘플은 기본 카테고리에 맞춰 만든 고정 데이터다.
+// 사용자가 고친 런타임 목록이 아니라 기본 프리셋으로 확인한다. (ADR 0019)
+const defaultPreset = categoryPreset()
 
 const samples = [
   {
@@ -29,7 +33,7 @@ const samples = [
 ]
 
 export const SAMPLE_DOCUMENTS = samples.map((sample) => {
-  if (!CATEGORY_OPTIONS.includes(sample.expectedCategory)) {
+  if (!defaultPreset.has(sample.expectedCategory)) {
     throw new Error(`알 수 없는 샘플 기대 카테고리: ${sample.expectedCategory}`)
   }
 

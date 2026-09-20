@@ -25,10 +25,3 @@ export function categoryPreset(categories = DEFAULT_CATEGORIES) {
     has: (name) => options.includes(name),
   }
 }
-
-// 전환용. 아직 프리셋을 받지 않는 호출부가 남아 있다. 4단계에서 지운다.
-const defaultPreset = categoryPreset()
-export const CATEGORIES = DEFAULT_CATEGORIES
-export const CATEGORY_NAMES = defaultPreset.names
-export const CATEGORY_OPTIONS = defaultPreset.options
-export const hintOf = defaultPreset.hintOf

@@ -1,13 +1,14 @@
 import { useId, useState } from 'react'
 import StatusBadge from './StatusBadge'
-import { CATEGORY_OPTIONS, UNCLASSIFIED } from '../../shared/categories.js'
+import { UNCLASSIFIED } from '../../shared/categories.js'
 import { extensionOf, formatSize } from '../lib/read/fileKind'
 import './ResultRow.css'
 
 // 확인 화면의 한 줄. 파일명 · 카테고리 드롭다운 · 근거 한 줄. (ADR 0004)
 // 확신이 없는 항목(미분류 · 분류 실패)만 펼친 채로 시작한다.
 
-function ResultRow({ item, onChangeCategory, onRetry, disabled }) {
+// 드롭다운 목록은 이 화면이 쓰는 프리셋에서 온다. 모듈 상수가 아니다. (ADR 0019)
+function ResultRow({ item, preset, onChangeCategory, onRetry, disabled }) {
   const { id, file, name, size } = item.source
   const { phase, error, category, quote } = item.classification
   const failed = phase.endsWith('-failed')
@@ -97,7 +98,7 @@ function ResultRow({ item, onChangeCategory, onRetry, disabled }) {
               aria-label={`${name} 카테고리`}
               onChange={(event) => onChangeCategory(id, event.target.value)}
             >
-              {CATEGORY_OPTIONS.map((name) => (
+              {preset.options.map((name) => (
                 <option key={name} value={name}>
                   {name}
                 </option>
