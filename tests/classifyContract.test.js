@@ -8,6 +8,9 @@ import { extractText } from '../src/lib/read/extractText.js'
 import { createClassifier, readAIConfig } from '../server/classifier.js'
 import { createHandler } from '../api/classify.js'
 
+// 요청에 실어 보내는 카테고리. 기본값과 다른 목록으로 두어 하드코딩을 잡는다. (ADR 0019)
+const categories = [{ name: '계약서', hint: '용역·근로 계약, NDA' }, { name: '세금 신고', hint: '부가세, 원천세' }]
+
 // 읽기까지 끝나 분류 대기 중인 문서. (ADR 0013)
 const document = (id, over = {}) => {
   const item = createDocument({ name: `${id}.pdf`, size: 10 }, id)
@@ -17,10 +20,13 @@ const document = (id, over = {}) => {
   }
 }
 
-test('전송 데이터에는 이름과 제한된 앞부분만 포함한다', () => {
+test('전송 데이터에는 이름과 제한된 앞부분, 이번에 쓸 카테고리만 포함한다', () => {
   const input = buildClassificationInput(document('a', { text: '가'.repeat(10000) }))
-  assert.deepEqual(Object.keys(input), ['name', 'text'])
+  assert.deepEqual(Object.keys(input), ['name', 'text', 'categories'])
   assert.equal(input.text.length, MAX_TEXT_CHARS)
+  // 편집 화면이 붙일 id 같은 여분 필드는 싣지 않는다. (ADR 0008, 0019)
+  const withId = buildClassificationInput(document('a'), [{ name: '세금 신고', hint: '부가세', id: 'x' }])
+  assert.deepEqual(withId.categories, [{ name: '세금 신고', hint: '부가세' }])
 })
 test('잘못된 응답과 없는 카테고리는 미분류가 된다', () => {
   for (const value of [null, {}, { category: '없는 분류' }, { category: '계약서', extra: true }]) {
@@ -162,17 +168,19 @@ test('API는 메서드·입력 검증을 먼저 하며 내부 오류를 노출�
   }
   assert.equal((await invoke('GET')).code, 405)
   assert.equal((await invoke('POST', '{')).code, 400)
-  assert.equal((await invoke('POST', { name: 'a', text: 'x'.repeat(6001) })).code, 400)
-  assert.equal((await invoke('POST', { name: 'a', text: 'ok', file: 'raw' })).code, 400)
+  assert.equal((await invoke('POST', { name: 'a', text: 'x'.repeat(6001), categories })).code, 400)
+  assert.equal((await invoke('POST', { name: 'a', text: 'ok', categories, file: 'raw' })).code, 400)
+  // 카테고리를 안 실으면 거절한다. 기본값으로 대신 분류하지 않는다. (ADR 0019)
+  assert.equal((await invoke('POST', { name: 'a', text: 'ok' })).code, 400)
   assert.equal(calls, 0)
-  const result = await invoke('POST', { name: 'a', text: 'ok' })
+  const result = await invoke('POST', { name: 'a', text: 'ok', categories })
   assert.equal(result.code, 502)
   assert.ok(!JSON.stringify(result.body).includes('secret-api-key'))
 })
 test('API 응답에는 카테고리와 근거 인용문만 담긴다', async () => {
   const handler = createHandler(() => async () => ({ category: '계약서', quote: '갑과 을은 다음과 같이 계약한다', internal: 'secret' }))
   const res = { setHeader() {}, status(code) { this.code = code; return this }, json(value) { this.body = value; return this } }
-  await handler({ method: 'POST', body: { name: 'a.pdf', text: '내용' } }, res)
+  await handler({ method: 'POST', body: { name: 'a.pdf', text: '내용', categories } }, res)
   assert.equal(res.code, 200)
   assert.deepEqual(res.body, { category: '계약서', quote: '갑과 을은 다음과 같이 계약한다' })
 })
