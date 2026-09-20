@@ -120,7 +120,12 @@ test('환경 변수로 제공자 주소·모델·키를 바꾸며 자동 재시�
     }
   }
   const classify = createClassifier({ AI_PROVIDER: 'openai-compatible', AI_BASE_URL: 'https://example.com/v1', AI_MODEL: 'custom', AI_API_KEY: 'test-key' }, Client)
-  assert.equal((await classify({ name: 'a', text: '내용' })).category, '계약서')
+  assert.equal((await classify({ name: 'a', text: '내용', categories })).category, '계약서')
+  // 스키마와 프롬프트가 이번 요청의 카테고리를 따른다. 기본 목록에 없는 이름이다. (ADR 0019)
+  assert.deepEqual(payload.response_format.json_schema.schema.properties.category.enum, ['계약서', '세금 신고', '미분류'])
+  assert.match(payload.messages[0].content, /세금 신고/)
+  // 카테고리를 user 메시지에 또 싣지 않는다.
+  assert.deepEqual(Object.keys(JSON.parse(payload.messages[1].content)), ['name', 'text'])
   assert.equal(options.baseURL, 'https://example.com/v1')
   assert.equal(options.maxRetries, 0)
   assert.equal(payload.model, 'custom')
