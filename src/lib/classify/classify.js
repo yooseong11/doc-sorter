@@ -10,5 +10,5 @@ export async function requestClassification(input, fetcher = fetch) {
     signal: AbortSignal.timeout(45000),
   })
   if (!response.ok) throw new Error('분류 요청에 실패했습니다. 다시 시도해 주세요.')
-  return normalizeClassification(await response.json())
+  return normalizeClassification(await response.json(), input.text)
 }

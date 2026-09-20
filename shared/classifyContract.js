@@ -17,6 +17,18 @@ export function toQuote(value) {
   return typeof value === 'string' ? value.trim().slice(0, MAX_QUOTE_CHARS) : ''
 }
 
+// PDF는 글자 조각을 공백으로 이어 붙이므로 원문의 공백을 믿을 수 없다.
+// 한글은 자모 결합 방식이 두 가지라 NFC로 맞춘 뒤 공백을 모두 지우고 비교한다. (ADR 0018)
+export function stripSpaces(value) {
+  return value.normalize('NFC').replace(/\s+/g, '')
+}
+
+// 지어낸 문장을 근거로 보여주지 않으려고 원문에 있는지 확인한다. 원문이 없으면 확인할 수 없으니 버린다. (ADR 0018)
+export function quoteInText(quote, text) {
+  const needle = stripSpaces(quote)
+  return needle.length > 0 && stripSpaces(text).includes(needle)
+}
+
 export function buildClassificationInput(item) {
   return {
     name: item.source.name,
@@ -25,8 +37,10 @@ export function buildClassificationInput(item) {
 }
 
 // 서버와 브라우저가 각각 부른다. 2겹으로 막는다. (ADR 0009, 0016)
-export function normalizeClassification(value) {
+// text는 모델에 보낸 원문이다. 넘기지 않으면 인용문을 확인할 수 없어 비운다. (ADR 0018)
+export function normalizeClassification(value, text = '') {
   const result = v.safeParse(resultSchema, value)
   if (!result.success) return { category: UNCLASSIFIED, quote: '' }
-  return { category: result.output.category, quote: toQuote(result.output.quote) }
+  const quote = toQuote(result.output.quote)
+  return { category: result.output.category, quote: quoteInText(quote, text) ? quote : '' }
 }

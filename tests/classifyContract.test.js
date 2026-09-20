@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildClassificationInput, normalizeClassification, MAX_TEXT_CHARS, MAX_QUOTE_CHARS } from '../shared/classifyContract.js'
+import { buildClassificationInput, normalizeClassification, quoteInText, MAX_TEXT_CHARS, MAX_QUOTE_CHARS } from '../shared/classifyContract.js'
 import { requestClassification } from '../src/lib/classify/classify.js'
 import { createDocument, documentsReducer } from '../src/lib/state/documentsReducer.js'
 import { classifyDocuments, prepareDocument } from '../src/lib/state/runDocuments.js'
@@ -29,14 +29,26 @@ test('잘못된 응답과 없는 카테고리는 미분류가 된다', () => {
   assert.equal(normalizeClassification({ category: '계약서' }).category, '계약서')
 })
 test('인용문은 상한까지 자르고 값이 이상하면 카테고리만 살린다', () => {
-  assert.equal(normalizeClassification({ category: '계약서', quote: '가'.repeat(300) }).quote.length, MAX_QUOTE_CHARS)
-  assert.equal(normalizeClassification({ category: '계약서', quote: '  근거 문장  ' }).quote, '근거 문장')
-  assert.equal(normalizeClassification({ category: '계약서' }).quote, '')
+  assert.equal(normalizeClassification({ category: '계약서', quote: '가'.repeat(300) }, '가'.repeat(300)).quote.length, MAX_QUOTE_CHARS)
+  assert.equal(normalizeClassification({ category: '계약서', quote: '  근거 문장  ' }, '이것은 근거 문장입니다').quote, '근거 문장')
+  assert.equal(normalizeClassification({ category: '계약서' }, '원문').quote, '')
   for (const value of [null, 42, { text: '근거' }]) {
-    const result = normalizeClassification({ category: '계약서', quote: value })
+    const result = normalizeClassification({ category: '계약서', quote: value }, '원문')
     assert.equal(result.category, '계약서')
     assert.equal(result.quote, '')
   }
+})
+test('원문에 없는 인용문은 비우고 공백 차이는 같은 문장으로 본다', () => {
+  // PDF 추출은 글자 조각을 공백으로 이어 붙인다. 공백만 다른 것은 같은 문장이다. (ADR 0018)
+  assert.equal(quoteInText('갑과 을은 다음과 같이 계약한다', '제1조 갑 과  을은\n다음과같이 계약한다.'), true)
+  assert.equal(quoteInText('연차 사용을 승인한다', '갑과 을은 다음과 같이 계약한다'), false)
+  assert.equal(quoteInText('   ', '원문'), false)
+  // 지어낸 문장은 카테고리만 남기고 버린다.
+  const made = normalizeClassification({ category: '계약서', quote: '모델이 지어낸 문장' }, '갑과 을은 다음과 같이 계약한다')
+  assert.equal(made.category, '계약서')
+  assert.equal(made.quote, '')
+  // 원문을 넘기지 않으면 확인할 수 없으므로 비운다.
+  assert.equal(normalizeClassification({ category: '계약서', quote: '근거 문장' }).quote, '')
 })
 test('파일별 실패를 격리하고 미지원 파일은 API를 호출하지 않는다', async () => {
   let rows = [document('a'), document('b'), document('c', { readable: false })]
@@ -124,7 +136,8 @@ test('DeepSeek은 기본 주소를 쓰고 추론 모드를 끈 채로 json_objec
     }
   }
   const classify = createClassifier({ AI_PROVIDER: 'deepseek', AI_MODEL: 'deepseek-flash', AI_API_KEY: 'test-key' }, Client)
-  const classified = await classify({ name: 'a', text: '내용' })
+  // 인용문 확인은 보낸 원문과 대조한다. (ADR 0018)
+  const classified = await classify({ name: 'a', text: '연차 사용 신청서를 제출합니다.' })
   assert.equal(classified.category, '근태')
   assert.equal(classified.quote, '연차 사용 신청서')
   // 인용문 몫까지 출력 한도를 잡아 둔다. (ADR 0015)

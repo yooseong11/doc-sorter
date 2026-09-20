@@ -67,7 +67,7 @@ export function createClassifier(env, Client = OpenAI) {
       throw new Error('분류 응답을 완료하지 못했습니다.')
     }
     try {
-      return normalizeClassification(JSON.parse(choice.message.content))
+      return normalizeClassification(JSON.parse(choice.message.content), input.text)
     } catch {
       return normalizeClassification(null)
     }
