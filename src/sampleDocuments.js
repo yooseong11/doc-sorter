@@ -12,8 +12,8 @@ const samples = [
     expectedCategory: '근태',
   },
   {
-    fileName: '국민연금_보험료_고지서.pdf',
-    url: '/samples/국민연금_보험료_고지서.pdf',
+    fileName: '출석인정신청서.hwpx',
+    url: '/samples/출석인정신청서.hwpx',
     expectedCategory: '미분류',
   },
   {
