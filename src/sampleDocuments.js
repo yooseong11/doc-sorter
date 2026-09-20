@@ -14,7 +14,7 @@ const samples = [
   {
     fileName: '출석인정신청서.hwpx',
     url: '/samples/출석인정신청서.hwpx',
-    expectedCategory: '미분류',
+    expectedCategory: '근태',
   },
   {
     fileName: '로고디자인_용역계약서.pdf',
