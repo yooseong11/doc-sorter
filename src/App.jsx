@@ -11,8 +11,7 @@ function App() {
   const [screen, setScreen] = useState('s1')
   const [items, dispatch] = useReducer(documentsReducer, [])
   // 편집 가능한 목록이 원본이고, 화면과 계약이 쓰는 조회는 전부 여기서 파생시킨다. (ADR 0019)
-  // 목록을 바꾸는 setter는 카테고리 편집 UI를 붙일 때 꺼낸다.
-  const [categories] = useState(DEFAULT_CATEGORIES)
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES)
   const preset = useMemo(() => categoryPreset(categories), [categories])
   const [busy, setBusy] = useState(false)
   const running = useRef(false)
@@ -34,7 +33,7 @@ function App() {
 
   return (
     <div className="app">
-      {screen === 's1' && <UploadScreen items={items} dispatch={dispatch} categories={categories} classifying={busy} onClassify={() => runClassification()} />}
+      {screen === 's1' && <UploadScreen items={items} dispatch={dispatch} categories={categories} onCategoriesChange={setCategories} classifying={busy} onClassify={() => runClassification()} />}
       {screen === 's2' && <ConfirmScreen items={items} dispatch={dispatch} preset={preset} busy={busy} onRetry={runClassification} onBack={() => setScreen('s1')} onNext={() => setScreen('s3')} />}
       {screen === 's3' && <SaveScreen items={items} dispatch={dispatch} preset={preset} onBack={() => setScreen('s2')} onRestart={() => { dispatch({ type: 'reset' }); setScreen('s1') }} />}
 

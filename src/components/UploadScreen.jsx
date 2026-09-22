@@ -5,6 +5,7 @@ import SampleDocumentsButton from './SampleDocumentsButton'
 import { createDocument } from '../lib/state/documentsReducer'
 import { prepareDocument } from '../lib/state/runDocuments'
 import { supportsDirectoryPicker } from '../lib/save/saveFolder'
+import { hasBlockingIssue } from '../../shared/categories.js'
 import './UploadScreen.css'
 
 // 폴더 선택 API가 없으면 첫 화면에서 막는다. (ADR 0012)
@@ -21,11 +22,13 @@ function isAccepted(file) {
   return ACCEPT_EXTENSIONS.some((extension) => name.endsWith(extension))
 }
 
-function UploadScreen({ items, dispatch, categories, classifying, onClassify }) {
+function UploadScreen({ items, dispatch, categories, onCategoriesChange, classifying, onClassify }) {
   const inputRef = useRef(null)
   const [dragging, setDragging] = useState(false)
   const reading = items.some((item) => item.classification.phase === 'reading')
-  const canClassify = CAN_PICK_DIRECTORY && items.length > 0 && !reading && !classifying
+  // 이름이 비었거나 겹치면 서버 스키마가 400으로 막는다. 누르기 전에 막는다. (ADR 0020)
+  const categoriesBlocked = hasBlockingIssue(categories)
+  const canClassify = CAN_PICK_DIRECTORY && items.length > 0 && !reading && !classifying && !categoriesBlocked
   const canDrop = CAN_PICK_DIRECTORY && !classifying
 
   function addFiles(files) {
@@ -138,7 +141,11 @@ function UploadScreen({ items, dispatch, categories, classifying, onClassify }) 
         </p>
       )}
 
-      <CategoryEditor categories={categories} />
+      <CategoryEditor
+        categories={categories}
+        onChange={onCategoriesChange}
+        disabled={classifying}
+      />
 
       <section
         className={`upload__panel${dragging ? ' upload__panel--dragging' : ''}`}

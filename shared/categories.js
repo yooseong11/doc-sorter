@@ -25,3 +25,25 @@ export function categoryPreset(categories = DEFAULT_CATEGORIES) {
     has: (name) => options.includes(name),
   }
 }
+
+// 편집 중 각 행의 문제를 돌려준다. block은 분류를 막고, warn은 알리기만 한다. (ADR 0020)
+// 길이 상한은 입력칸의 maxLength가 막으므로 여기서 보지 않는다.
+export function categoryIssues(categories) {
+  const counts = new Map()
+  for (const category of categories) {
+    const name = category.name.trim()
+    counts.set(name, (counts.get(name) ?? 0) + 1)
+  }
+  return categories.map((category) => {
+    const name = category.name.trim()
+    if (name.length === 0) return { level: 'block', message: '이름을 입력해 주세요.' }
+    if (name === UNCLASSIFIED) return { level: 'block', message: `'${UNCLASSIFIED}'는 카테고리 이름으로 쓸 수 없습니다.` }
+    if (counts.get(name) > 1) return { level: 'block', message: '같은 이름이 이미 있습니다.' }
+    if (category.hint.trim().length === 0) return { level: 'warn', message: '설명이 없으면 분류가 부정확해집니다.' }
+    return null
+  })
+}
+
+export function hasBlockingIssue(categories) {
+  return categoryIssues(categories).some((issue) => issue?.level === 'block')
+}
