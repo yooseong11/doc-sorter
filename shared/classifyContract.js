@@ -1,7 +1,7 @@
 // 분류 요청·응답의 공유 계약. 브라우저와 서버가 각각 여기만 본다. (ADR 0016)
 // fetch는 이 파일에 두지 않는다. 브라우저 어댑터(src/lib/classify/classify.js)의 몫이다.
 import * as v from 'valibot'
-import { DEFAULT_CATEGORIES, UNCLASSIFIED, categoryPreset } from './categories.js'
+import { UNCLASSIFIED } from './categories.js'
 
 export const MAX_TEXT_CHARS = 3000
 // 인용문은 원문 문장 그대로다. 응답과 화면에 본문이 길게 실리지 않게 상한을 둔다. (ADR 0015)
@@ -61,7 +61,7 @@ export function quoteInText(quote, text) {
 }
 
 // 편집 화면이 붙일 id 같은 여분 필드는 계약에 싣지 않는다. 이름과 설명만 보낸다. (ADR 0008)
-export function buildClassificationInput(item, categories = DEFAULT_CATEGORIES) {
+export function buildClassificationInput(item, categories) {
   return {
     name: item.source.name,
     text: item.classification.text.slice(0, MAX_TEXT_CHARS),
@@ -71,8 +71,8 @@ export function buildClassificationInput(item, categories = DEFAULT_CATEGORIES) 
 
 // 서버와 브라우저가 각각 부른다. 2겹으로 막는다. (ADR 0009, 0016)
 // text는 모델에 보낸 원문이다. 넘기지 않으면 인용문을 확인할 수 없어 비운다. (ADR 0018)
-// preset은 이 요청에 쓴 카테고리다. 넘기지 않으면 기본 프리셋으로 본다. (ADR 0019)
-export function normalizeClassification(value, text = '', preset = categoryPreset()) {
+// preset은 이 요청에 쓴 카테고리다. 부르는 쪽이 반드시 넘긴다. (ADR 0019)
+export function normalizeClassification(value, text = '', preset) {
   const result = v.safeParse(resultSchemaOf(preset.options), value)
   if (!result.success) return { category: UNCLASSIFIED, quote: '' }
   const quote = toQuote(result.output.quote)

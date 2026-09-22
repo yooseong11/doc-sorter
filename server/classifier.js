@@ -76,7 +76,7 @@ export function createClassifier(env, Client = OpenAI) {
     try {
       return normalizeClassification(JSON.parse(choice.message.content), input.text, preset)
     } catch {
-      return normalizeClassification(null)
+      return normalizeClassification(null, '', preset)
     }
   }
 }

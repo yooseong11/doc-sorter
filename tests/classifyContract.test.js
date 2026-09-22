@@ -11,6 +11,8 @@ import { createHandler } from '../api/classify.js'
 
 // 요청에 실어 보내는 카테고리. 기본값과 다른 목록으로 두어 하드코딩을 잡는다. (ADR 0019)
 const categories = [{ name: '계약서', hint: '용역·근로 계약, NDA' }, { name: '세금 신고', hint: '부가세, 원천세' }]
+// 기본 프리셋. 기본 매개변수가 사라졌으므로 테스트가 직접 만들어 넘긴다. (ADR 0019)
+const preset = categoryPreset()
 
 // 읽기까지 끝나 분류 대기 중인 문서. (ADR 0013)
 const document = (id, over = {}) => {
@@ -22,7 +24,7 @@ const document = (id, over = {}) => {
 }
 
 test('전송 데이터에는 이름과 제한된 앞부분, 이번에 쓸 카테고리만 포함한다', () => {
-  const input = buildClassificationInput(document('a', { text: '가'.repeat(10000) }))
+  const input = buildClassificationInput(document('a', { text: '가'.repeat(10000) }), preset.categories)
   assert.deepEqual(Object.keys(input), ['name', 'text', 'categories'])
   assert.equal(input.text.length, MAX_TEXT_CHARS)
   // 편집 화면이 붙일 id 같은 여분 필드는 싣지 않는다. (ADR 0008, 0019)
@@ -31,16 +33,16 @@ test('전송 데이터에는 이름과 제한된 앞부분, 이번에 쓸 카테
 })
 test('잘못된 응답과 없는 카테고리는 미분류가 된다', () => {
   for (const value of [null, {}, { category: '없는 분류' }, { category: '계약서', extra: true }]) {
-    assert.equal(normalizeClassification(value).category, '미분류')
+    assert.equal(normalizeClassification(value, '', preset).category, '미분류')
   }
-  assert.equal(normalizeClassification({ category: '계약서' }).category, '계약서')
+  assert.equal(normalizeClassification({ category: '계약서' }, '', preset).category, '계약서')
 })
 test('인용문은 상한까지 자르고 값이 이상하면 카테고리만 살린다', () => {
-  assert.equal(normalizeClassification({ category: '계약서', quote: '가'.repeat(300) }, '가'.repeat(300)).quote.length, MAX_QUOTE_CHARS)
-  assert.equal(normalizeClassification({ category: '계약서', quote: '  근거 문장  ' }, '이것은 근거 문장입니다').quote, '근거 문장')
-  assert.equal(normalizeClassification({ category: '계약서' }, '원문').quote, '')
+  assert.equal(normalizeClassification({ category: '계약서', quote: '가'.repeat(300) }, '가'.repeat(300), preset).quote.length, MAX_QUOTE_CHARS)
+  assert.equal(normalizeClassification({ category: '계약서', quote: '  근거 문장  ' }, '이것은 근거 문장입니다', preset).quote, '근거 문장')
+  assert.equal(normalizeClassification({ category: '계약서' }, '원문', preset).quote, '')
   for (const value of [null, 42, { text: '근거' }]) {
-    const result = normalizeClassification({ category: '계약서', quote: value }, '원문')
+    const result = normalizeClassification({ category: '계약서', quote: value }, '원문', preset)
     assert.equal(result.category, '계약서')
     assert.equal(result.quote, '')
   }
@@ -51,17 +53,17 @@ test('원문에 없는 인용문은 비우고 공백 차이는 같은 문장으�
   assert.equal(quoteInText('연차 사용을 승인한다', '갑과 을은 다음과 같이 계약한다'), false)
   assert.equal(quoteInText('   ', '원문'), false)
   // 지어낸 문장은 카테고리만 남기고 버린다.
-  const made = normalizeClassification({ category: '계약서', quote: '모델이 지어낸 문장' }, '갑과 을은 다음과 같이 계약한다')
+  const made = normalizeClassification({ category: '계약서', quote: '모델이 지어낸 문장' }, '갑과 을은 다음과 같이 계약한다', preset)
   assert.equal(made.category, '계약서')
   assert.equal(made.quote, '')
   // 원문을 넘기지 않으면 확인할 수 없으므로 비운다.
-  assert.equal(normalizeClassification({ category: '계약서', quote: '근거 문장' }).quote, '')
+  assert.equal(normalizeClassification({ category: '계약서', quote: '근거 문장' }, '', preset).quote, '')
 })
 test('파일별 실패를 격리하고 미지원 파일은 API를 호출하지 않는다', async () => {
   let rows = [document('a'), document('b'), document('c', { readable: false })]
   const calls = []
   const dispatch = (action) => { rows = documentsReducer(rows, action) }
-  await classifyDocuments(rows, { dispatch, classify: async (input) => {
+  await classifyDocuments(rows, { dispatch, preset, classify: async (input) => {
     calls.push(input.name)
     if (input.name === 'a.pdf') throw new Error('network')
     return { category: '계약서' }
@@ -69,8 +71,8 @@ test('파일별 실패를 격리하고 미지원 파일은 API를 호출하지 �
   assert.deepEqual(calls, ['a.pdf', 'b.pdf'])
   assert.deepEqual(rows.map((row) => row.classification.phase), ['classify-failed', 'classified', 'classified'])
   // 리듀서는 액션에 실려 온 목록으로만 검증한다. 목록이 없으면 바꾸지 않는다. (ADR 0009 · 0019)
-  rows = documentsReducer(rows, { type: 'category', id: 'b', category: '근태', options: categoryPreset().options })
-  await classifyDocuments(rows, { dispatch, retry: true, classify: async (input) => {
+  rows = documentsReducer(rows, { type: 'category', id: 'b', category: '근태', options: preset.options })
+  await classifyDocuments(rows, { dispatch, preset, retry: true, classify: async (input) => {
     calls.push(input.name)
     return { category: '복지 신청' }
   } })
@@ -92,7 +94,7 @@ test('읽기 실패 재시도는 파일부터 다시 읽는다', async () => {
   const dispatch = (action) => { rows = documentsReducer(rows, action) }
   await prepareDocument(rows[0], { dispatch, extract: async () => { throw new Error('corrupt') } })
   assert.equal(rows[0].classification.phase, 'read-failed')
-  await classifyDocuments(rows, { dispatch, retry: true, extract: async () => ({ readable: true, text: '복구된 문서의 내용입니다.' }), classify: async () => ({ category: '계약서' }) })
+  await classifyDocuments(rows, { dispatch, preset, retry: true, extract: async () => ({ readable: true, text: '복구된 문서의 내용입니다.' }), classify: async () => ({ category: '계약서' }) })
   assert.equal(rows[0].classification.phase, 'classified')
 })
 test('미지원 형식과 텍스트 부족은 읽을 수 없음으로 반환한다', async () => {
