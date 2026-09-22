@@ -1,20 +1,37 @@
 import { useState } from 'react'
 import { categoryIssues } from '../../shared/categories.js'
-import { MAX_CATEGORY_NAME_CHARS, MAX_CATEGORY_HINT_CHARS } from '../../shared/classifyContract.js'
+import {
+  MAX_CATEGORIES,
+  MAX_CATEGORY_NAME_CHARS,
+  MAX_CATEGORY_HINT_CHARS,
+} from '../../shared/classifyContract.js'
 import './CategoryEditor.css'
 
 // 카테고리 편집 — 프리셋은 분류 요청에 실려 나가므로 분류 전에만 고칠 수 있다. (ADR 0019)
 // 드롭존(.upload__panel) 바깥에 둔다. 안에 두면 입력칸 위로 파일을 떨어뜨리게 된다.
 // 설명은 비어도 받고 거르지 않는다. 경고만 띄운다. (ADR 0020)
+// 개수는 여기서 막는다. categoryIssues는 행 단위라 목록 전체의 개수를 보지 못한다.
 
 function CategoryEditor({ categories, onChange, disabled }) {
   const [open, setOpen] = useState(false)
   const issues = categoryIssues(categories)
+  const canAdd = !disabled && categories.length < MAX_CATEGORIES
+  const canRemove = !disabled && categories.length > 1
 
-  function updateField(index, field, value) {
-    onChange(categories.map((category, at) => (
-      at === index ? { ...category, [field]: value } : category
+  function updateField(id, field, value) {
+    onChange(categories.map((category) => (
+      category.id === id ? { ...category, [field]: value } : category
     )))
+  }
+
+  function addCategory() {
+    if (!canAdd) return
+    onChange([...categories, { id: crypto.randomUUID(), name: '', hint: '' }])
+  }
+
+  function removeCategory(id) {
+    if (!canRemove) return
+    onChange(categories.filter((category) => category.id !== id))
   }
 
   return (
@@ -61,7 +78,7 @@ function CategoryEditor({ categories, onChange, disabled }) {
             {categories.map((category, index) => {
               const issue = issues[index]
               return (
-                <li className="categories__row" key={index}>
+                <li className="categories__row" key={category.id}>
                   <div className="categories__fields">
                     <input
                       className="categories__input categories__input--name"
@@ -71,7 +88,7 @@ function CategoryEditor({ categories, onChange, disabled }) {
                       disabled={disabled}
                       aria-label={`카테고리 ${index + 1} 이름`}
                       placeholder="이름"
-                      onChange={(event) => updateField(index, 'name', event.target.value)}
+                      onChange={(event) => updateField(category.id, 'name', event.target.value)}
                     />
                     <input
                       className="categories__input categories__input--hint"
@@ -81,8 +98,25 @@ function CategoryEditor({ categories, onChange, disabled }) {
                       disabled={disabled}
                       aria-label={`카테고리 ${index + 1} 설명`}
                       placeholder="이 카테고리에 들어갈 문서의 예"
-                      onChange={(event) => updateField(index, 'hint', event.target.value)}
+                      onChange={(event) => updateField(category.id, 'hint', event.target.value)}
                     />
+                    <button
+                      type="button"
+                      className="categories__remove"
+                      disabled={!canRemove}
+                      aria-label={`${category.name.trim() || `카테고리 ${index + 1}`} 삭제`}
+                      onClick={() => removeCategory(category.id)}
+                    >
+                      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+                        <path
+                          d="M7 7l10 10M17 7L7 17"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.6"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </button>
                   </div>
                   {issue && (
                     <p className={`categories__issue categories__issue--${issue.level}`} role="status">
@@ -93,6 +127,20 @@ function CategoryEditor({ categories, onChange, disabled }) {
               )
             })}
           </ul>
+
+          <div className="categories__actions">
+            <button
+              type="button"
+              className="categories__add"
+              disabled={!canAdd}
+              onClick={addCategory}
+            >
+              + 카테고리 추가
+            </button>
+            <span className="categories__limit">
+              {categories.length} / {MAX_CATEGORIES}
+            </span>
+          </div>
         </div>
       )}
     </section>

@@ -11,7 +11,10 @@ function App() {
   const [screen, setScreen] = useState('s1')
   const [items, dispatch] = useReducer(documentsReducer, [])
   // 편집 가능한 목록이 원본이고, 화면과 계약이 쓰는 조회는 전부 여기서 파생시킨다. (ADR 0019)
-  const [categories, setCategories] = useState(DEFAULT_CATEGORIES)
+  // 편집 중 행을 구분할 id. 계약에는 싣지 않는다. buildClassificationInput이 걸러낸다. (ADR 0008)
+  const [categories, setCategories] = useState(
+    () => DEFAULT_CATEGORIES.map((category) => ({ ...category, id: crypto.randomUUID() })),
+  )
   const preset = useMemo(() => categoryPreset(categories), [categories])
   const [busy, setBusy] = useState(false)
   const running = useRef(false)
