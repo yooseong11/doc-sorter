@@ -1,7 +1,8 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { categoryIssues, hasBlockingIssue, categoryPreset, UNCLASSIFIED } from '../shared/categories.js'
-import { inputSchema, MAX_CATEGORIES } from '../shared/classifyContract.js'
+import { inputSchema, categoriesSchema, MAX_CATEGORIES } from '../shared/classifyContract.js'
+import { withIds, defaultCategories } from '../src/lib/state/categoryStore.js'
 import * as v from 'valibot'
 
 const category = (name, hint = '설명') => ({ name, hint })
@@ -41,4 +42,27 @@ test('화면이 막는 것과 서버 스키마가 막는 것이 어긋나지 않
   // 상한을 넘기면 화면은 막지 못하고 서버가 막는다. 추가 버튼이 개수를 막아야 하는 이유다.
   const over = [...full, category('하나 더')]
   assert.equal(v.safeParse(inputSchema, { name: 'a.pdf', text: '내용', categories: over }).success, false)
+})
+
+test('행 id는 저장·전송 대상이 아니고 매번 새로 붙는다', () => {
+  // 편집 화면이 행을 구분하려고 붙이는 값이다. (ADR 0008, 0021)
+  const list = withIds([category('근태'), category('계약서')])
+  assert.equal(new Set(list.map((item) => item.id)).size, 2)
+  assert.equal(v.safeParse(categoriesSchema, list).success, false)
+  assert.equal(v.safeParse(categoriesSchema, list.map(({ name, hint }) => ({ name, hint }))).success, true)
+})
+
+test('기본값으로 되돌리면 항상 같은 4개가 나온다', () => {
+  const first = defaultCategories()
+  const second = defaultCategories()
+  assert.deepEqual(first.map((item) => item.name), second.map((item) => item.name))
+  assert.equal(first.length, 4)
+  assert.equal(hasBlockingIssue(first), false)
+})
+
+test('저장값이 계약에 맞지 않으면 버린다', () => {
+  // 예전 버전이 남긴 값이 그대로 살아나면 분류 요청이 400이 된다. (ADR 0021)
+  for (const stored of [null, [], '문자열', [{ name: '근태' }], [{ name: '', hint: '' }], [{ name: UNCLASSIFIED, hint: '' }]]) {
+    assert.equal(v.safeParse(categoriesSchema, stored).success, false)
+  }
 })
