@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import FileRow from './FileRow'
+import CategoryEditor from './CategoryEditor'
 import SampleDocumentsButton from './SampleDocumentsButton'
 import { createDocument } from '../lib/state/documentsReducer'
 import { prepareDocument } from '../lib/state/runDocuments'
@@ -20,7 +21,7 @@ function isAccepted(file) {
   return ACCEPT_EXTENSIONS.some((extension) => name.endsWith(extension))
 }
 
-function UploadScreen({ items, dispatch, classifying, onClassify }) {
+function UploadScreen({ items, dispatch, categories, classifying, onClassify }) {
   const inputRef = useRef(null)
   const [dragging, setDragging] = useState(false)
   const reading = items.some((item) => item.classification.phase === 'reading')
@@ -136,6 +137,8 @@ function UploadScreen({ items, dispatch, classifying, onClassify }) {
           크롬이나 엣지로 열어주세요.
         </p>
       )}
+
+      <CategoryEditor categories={categories} />
 
       <section
         className={`upload__panel${dragging ? ' upload__panel--dragging' : ''}`}
