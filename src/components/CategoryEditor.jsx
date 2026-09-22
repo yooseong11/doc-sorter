@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { categoryIssues } from '../../shared/categories.js'
+import { defaultCategories } from '../lib/state/categoryStore'
 import {
   MAX_CATEGORIES,
   MAX_CATEGORY_NAME_CHARS,
@@ -14,6 +15,8 @@ import './CategoryEditor.css'
 
 function CategoryEditor({ categories, onChange, disabled }) {
   const [open, setOpen] = useState(false)
+  // 되돌리기는 없으므로(범위 결정) 누르기 전에 한 번 더 묻는다.
+  const [confirming, setConfirming] = useState(false)
   const issues = categoryIssues(categories)
   const canAdd = !disabled && categories.length < MAX_CATEGORIES
   const canRemove = !disabled && categories.length > 1
@@ -40,7 +43,7 @@ function CategoryEditor({ categories, onChange, disabled }) {
         type="button"
         className="categories__summary"
         aria-expanded={open}
-        onClick={() => setOpen(!open)}
+        onClick={() => { setOpen(!open); setConfirming(false) }}
       >
         <span className="categories__count">카테고리 {categories.length}개</span>
         <span className="categories__names">
@@ -140,6 +143,39 @@ function CategoryEditor({ categories, onChange, disabled }) {
             <span className="categories__limit">
               {categories.length} / {MAX_CATEGORIES}
             </span>
+          </div>
+
+          <div className="categories__reset">
+            {confirming ? (
+              <>
+                <span className="categories__reset-warning" role="status">
+                  편집한 카테고리가 모두 사라지고 기본 4개로 돌아갑니다.
+                </span>
+                <button
+                  type="button"
+                  className="categories__reset-button categories__reset-button--danger"
+                  onClick={() => { onChange(defaultCategories()); setConfirming(false) }}
+                >
+                  되돌리기
+                </button>
+                <button
+                  type="button"
+                  className="categories__reset-button"
+                  onClick={() => setConfirming(false)}
+                >
+                  취소
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                className="categories__reset-button"
+                disabled={disabled}
+                onClick={() => setConfirming(true)}
+              >
+                기본값으로 되돌리기
+              </button>
+            )}
           </div>
         </div>
       )}

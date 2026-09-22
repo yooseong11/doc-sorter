@@ -23,7 +23,7 @@ const categorySchema = v.strictObject({
   hint: v.pipe(v.string(), v.trim(), v.maxLength(MAX_CATEGORY_HINT_CHARS)),
 })
 
-const categoriesSchema = v.pipe(
+export const categoriesSchema = v.pipe(
   v.array(categorySchema),
   v.minLength(1),
   v.maxLength(MAX_CATEGORIES),
