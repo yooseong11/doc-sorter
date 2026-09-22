@@ -3,7 +3,7 @@
 import * as v from 'valibot'
 import { DEFAULT_CATEGORIES, UNCLASSIFIED, categoryPreset } from './categories.js'
 
-export const MAX_TEXT_CHARS = 6000
+export const MAX_TEXT_CHARS = 3000
 // 인용문은 원문 문장 그대로다. 응답과 화면에 본문이 길게 실리지 않게 상한을 둔다. (ADR 0015)
 export const MAX_QUOTE_CHARS = 120
 // 이름과 설명은 그대로 분류 프롬프트에 들어간다. 이 상한이 곧 요청 비용이다. (ADR 0019)
