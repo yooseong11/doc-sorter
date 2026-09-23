@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { useMemo, useReducer, useRef, useState } from 'react'
 import UploadScreen from './components/UploadScreen'
 import ConfirmScreen from './components/ConfirmScreen'
 import SaveScreen from './components/SaveScreen'
 import { documentsReducer } from './lib/state/documentsReducer'
 import { classifyDocuments } from './lib/state/runDocuments'
 import { categoryPreset } from '../shared/categories.js'
-import { defaultCategories, recallCategories, rememberCategories } from './lib/state/categoryStore'
+import { useCategories } from './lib/state/useCategories'
 import './App.css'
 
 function App() {
@@ -13,29 +13,10 @@ function App() {
   const [items, dispatch] = useReducer(documentsReducer, [])
   // 편집 가능한 목록이 원본이고, 화면과 계약이 쓰는 조회는 전부 여기서 파생시킨다. (ADR 0019)
   // 편집 중 행을 구분할 id. 계약에는 싣지 않는다. buildClassificationInput이 걸러낸다. (ADR 0008)
-  const [categories, setCategories] = useState(defaultCategories)
-  // 저장된 프리셋을 읽기 전에는 저장하지 않는다. 기본값으로 덮어쓰게 된다.
-  const loaded = useRef(false)
+  const [categories, setCategories] = useCategories()
   const preset = useMemo(() => categoryPreset(categories), [categories])
   const [busy, setBusy] = useState(false)
   const running = useRef(false)
-
-  // 저장된 프리셋을 한 번 읽는다. 없거나 계약에 맞지 않으면 기본값을 그대로 쓴다. (ADR 0021)
-  useEffect(() => {
-    let alive = true
-    void recallCategories().then((stored) => {
-      if (alive && stored) setCategories(stored)
-      loaded.current = true
-    })
-    return () => { alive = false }
-  }, [])
-
-  // 입력이 멈춘 뒤에 쓴다. 타이핑 한 글자마다 디스크를 건드리지 않는다. (ADR 0021)
-  useEffect(() => {
-    if (!loaded.current) return
-    const timer = setTimeout(() => { void rememberCategories(categories) }, 500)
-    return () => clearTimeout(timer)
-  }, [categories])
 
   async function runClassification(id) {
     if (running.current || items.some((item) => item.classification.phase === 'reading')) return
