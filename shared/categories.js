@@ -17,12 +17,15 @@ export function categoryPreset(categories = DEFAULT_CATEGORIES) {
   const names = categories.map((category) => category.name)
   const options = [...names, UNCLASSIFIED]
   const hints = new Map(categories.map((category) => [category.name, category.hint]))
+  const namesById = new Map(categories.map((category) => [category.id, category.name]))
   return {
     categories,
     names,
     options,
     hintOf: (name) => hints.get(name) ?? '',
     has: (name) => options.includes(name),
+    // categoryId → 이름. 없는 id(삭제된 카테고리)는 미분류로 본다. (ADR 0022)
+    nameOf: (id) => namesById.get(id) ?? UNCLASSIFIED,
   }
 }
 
