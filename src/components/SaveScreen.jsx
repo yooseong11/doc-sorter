@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import SaveRow from './SaveRow'
 import { UNCLASSIFIED } from '../../shared/categories.js'
-import { groupOrderOf } from '../groupOrder'
+import { groupItems } from '../groupOrder'
 import { logFileName } from '../lib/save/savePath'
 import { planSaves } from '../lib/save/savePlan'
 import { saveAll } from '../lib/save/saveFiles'
@@ -29,10 +29,10 @@ function SaveScreen({ items, dispatch, preset, onBack, onRestart }) {
   const savedCount = items.filter((item) => item.save.phase === 'saved').length
   const failedCount = items.filter((item) => item.save.phase.endsWith('-failed')).length
 
-  const folders = groupOrderOf(preset).map((name) => ({
-    name,
-    count: items.filter((item) => item.classification.category === name).length,
-  })).filter((group) => group.count > 0)
+  const folders = groupItems(items, preset).map((group) => ({
+    name: group.name,
+    count: group.rows.length,
+  }))
 
   // StrictMode는 effect를 두 번 실행한다. 되살리는 것도 여기서 해야 한다.
   useEffect(() => {
@@ -89,8 +89,14 @@ function SaveScreen({ items, dispatch, preset, onBack, onRestart }) {
       if (alive.current) dispatch({ type: 'save', id, patch })
     }
     try {
+      // 저장 로직은 폴더 이름을 그대로 받는다(categoryId를 모른다). id를 프리셋으로
+      // 이름으로 바꾼 사본을 만들어 넘긴다. save 쪽만 dispatch에 쓰이므로 안전하다. (ADR 0022)
+      const named = targets.map((item) => ({
+        ...item,
+        classification: { ...item.classification, category: preset.nameOf(item.classification.categoryId) },
+      }))
       // 저장될 이름을 먼저 목록에 반영한다. 대기 중인 줄에도 `_2`가 보인다. (ADR 0005)
-      const planned = await planSaves(targets, rootHandle)
+      const planned = await planSaves(named, rootHandle)
       dispatch({ type: 'plan', rows: planned })
       await saveAll(planned, { rootHandle, onRow, logName })
     } finally {

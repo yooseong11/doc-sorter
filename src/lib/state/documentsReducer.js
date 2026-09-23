@@ -13,7 +13,7 @@ export function createDocument(file, id) {
       error: null,
       readable: true,
       text: '',
-      category: UNCLASSIFIED,
+      categoryId: UNCLASSIFIED,
       quote: '',
     },
     save: {
@@ -49,15 +49,15 @@ export function documentsReducer(items, action) {
         ? { ...item, save: { ...item.save, ...plan.get(item.source.id) } }
         : item)
     }
-    // 목록이 런타임 상태라 이 요청에 쓴 options를 액션에 실어 받는다. (ADR 0019)
+    // 목록이 런타임 상태라 이 요청에 쓴 유효 id 목록을 액션에 실어 받는다. (ADR 0019 · 0022)
     // 안 넘어오면 검증할 수 없으므로 바꾸지 않는다. 조용히 통과시키지 않는다. (ADR 0009)
-    case 'category': return action.options?.includes(action.category)
+    case 'category': return action.ids?.includes(action.categoryId)
       ? items.map((item) => hasId(item, action.id)
         ? {
             ...item,
             classification: {
               ...item.classification,
-              category: action.category,
+              categoryId: action.categoryId,
               phase: 'classified',
               error: null,
             },

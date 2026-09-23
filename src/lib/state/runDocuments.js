@@ -24,7 +24,7 @@ export async function prepareDocument(item, { dispatch, extract = extractText })
   } catch {
     const patch = {
       phase: 'read-failed',
-      category: UNCLASSIFIED,
+      categoryId: UNCLASSIFIED,
       quote: '',
       error: '파일을 읽지 못했습니다. 파일 손상 또는 암호 설정을 확인해 주세요.',
     }
@@ -46,14 +46,14 @@ export async function classifyDocuments(items, { dispatch, classify = requestCla
     if (!item.classification.readable) {
       updateClassification(dispatch, item, {
         phase: 'classified',
-        category: UNCLASSIFIED,
+        categoryId: UNCLASSIFIED,
         error: null,
       })
       continue
     }
     updateClassification(dispatch, item, { phase: 'classifying', error: null })
     try {
-      const result = await classify(buildClassificationInput(item, preset.categories))
+      const result = await classify(buildClassificationInput(item, preset.categories), preset)
       updateClassification(dispatch, item, {
         ...result,
         phase: 'classified',
@@ -62,7 +62,7 @@ export async function classifyDocuments(items, { dispatch, classify = requestCla
     } catch {
       updateClassification(dispatch, item, {
         phase: 'classify-failed',
-        category: UNCLASSIFIED,
+        categoryId: UNCLASSIFIED,
         quote: '',
         error: '분류에 실패했습니다. 서버 설정과 연결을 확인한 뒤 다시 시도해 주세요.',
       })

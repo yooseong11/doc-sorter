@@ -1,29 +1,27 @@
 import ResultRow from './ResultRow'
 import { UNCLASSIFIED } from '../../shared/categories.js'
-import { groupOrderOf } from '../groupOrder'
+import { groupItems } from '../groupOrder'
 import './ConfirmScreen.css'
 
 // S2 확인 화면 — 카테고리별로 묶어서 보여주고, 행마다 드롭다운으로 바꾼다. (ADR 0004)
 // 실패한 파일도 목록에 남기고 사유와 재시도 버튼을 붙인다. (ADR 0013)
 
 function ConfirmScreen({ items: rows, dispatch, preset, busy, onRetry, onBack, onNext }) {
-  const groups = groupOrderOf(preset).map((name) => ({
-    name,
-    rows: rows.filter((row) => row.classification.category === name),
-  })).filter((group) => group.rows.length > 0)
+  const groups = groupItems(rows, preset)
 
   const reviewCount = rows.filter(
     (row) => row.classification.phase.endsWith('-failed')
-      || row.classification.category === UNCLASSIFIED,
+      || row.classification.categoryId === UNCLASSIFIED,
   ).length
 
   const allUnclassified =
     rows.length > 0
-    && rows.every((row) => row.classification.category === UNCLASSIFIED)
+    && rows.every((row) => row.classification.categoryId === UNCLASSIFIED)
 
-  function handleChangeCategory(id, category) {
-    // 리듀서가 검증할 목록을 액션에 같이 싣는다. (ADR 0009 · 0019)
-    if (!busy) dispatch({ type: 'category', id, category, options: preset.options })
+  function handleChangeCategory(id, categoryId) {
+    // 리듀서가 검증할 id 목록을 액션에 같이 싣는다. (ADR 0009 · 0019 · 0022)
+    const ids = [...preset.categories.map((category) => category.id), UNCLASSIFIED]
+    if (!busy) dispatch({ type: 'category', id, categoryId, ids })
   }
 
   return (

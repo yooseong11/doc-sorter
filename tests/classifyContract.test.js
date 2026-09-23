@@ -4,6 +4,7 @@ import { buildClassificationInput, normalizeClassification, quoteInText, MAX_TEX
 import { requestClassification } from '../src/lib/classify/classify.js'
 import { createDocument, documentsReducer } from '../src/lib/state/documentsReducer.js'
 import { categoryPreset } from '../shared/categories.js'
+import { withIds } from '../src/lib/state/categoryStore.js'
 import { classifyDocuments, prepareDocument } from '../src/lib/state/runDocuments.js'
 import { extractText } from '../src/lib/read/extractText.js'
 import { createClassifier, readAIConfig } from '../server/classifier.js'
@@ -60,24 +61,27 @@ test('원문에 없는 인용문은 비우고 공백 차이는 같은 문장으�
   assert.equal(normalizeClassification({ category: '계약서', quote: '근거 문장' }, '', preset).quote, '')
 })
 test('파일별 실패를 격리하고 미지원 파일은 API를 호출하지 않는다', async () => {
+  // 이 테스트만 id가 있는 프리셋을 쓴다. 'category' 액션이 이제 categoryId로 검증한다. (ADR 0022)
+  const idPreset = categoryPreset(withIds(categories))
   let rows = [document('a'), document('b'), document('c', { readable: false })]
   const calls = []
   const dispatch = (action) => { rows = documentsReducer(rows, action) }
-  await classifyDocuments(rows, { dispatch, preset, classify: async (input) => {
+  await classifyDocuments(rows, { dispatch, preset: idPreset, classify: async (input) => {
     calls.push(input.name)
     if (input.name === 'a.pdf') throw new Error('network')
     return { category: '계약서' }
   } })
   assert.deepEqual(calls, ['a.pdf', 'b.pdf'])
   assert.deepEqual(rows.map((row) => row.classification.phase), ['classify-failed', 'classified', 'classified'])
-  // 리듀서는 액션에 실려 온 목록으로만 검증한다. 목록이 없으면 바꾸지 않는다. (ADR 0009 · 0019)
-  rows = documentsReducer(rows, { type: 'category', id: 'b', category: '근태', options: preset.options })
-  await classifyDocuments(rows, { dispatch, preset, retry: true, classify: async (input) => {
+  // 리듀서는 액션에 실려 온 목록으로만 검증한다. 목록이 없으면 바꾸지 않는다. (ADR 0009 · 0019 · 0022)
+  const targetId = idPreset.categories.find((category) => category.name === '세금 신고').id
+  rows = documentsReducer(rows, { type: 'category', id: 'b', categoryId: targetId, ids: idPreset.categories.map((category) => category.id) })
+  await classifyDocuments(rows, { dispatch, preset: idPreset, retry: true, classify: async (input) => {
     calls.push(input.name)
     return { category: '복지 신청' }
   } })
   assert.deepEqual(calls, ['a.pdf', 'b.pdf', 'a.pdf'])
-  assert.equal(rows[1].classification.category, '근태')
+  assert.equal(rows[1].classification.categoryId, targetId)
 })
 test('삭제한 파일은 늦게 끝난 추출 결과로 돌아오지 않는다', async () => {
   let rows = [document('a')]
@@ -103,14 +107,16 @@ test('미지원 형식과 텍스트 부족은 읽을 수 없음으로 반환한�
   assert.equal((await extractText({ name: 'a.PDF' }, { pdf: async () => '문서의 내용을 충분히 읽었습니다.' })).readable, true)
 })
 test('클라이언트는 자체 API를 호출하고 HTTP 오류를 실패로 처리한다', async () => {
+  const idPreset = categoryPreset(withIds(categories))
   const input = { name: 'a.pdf', text: '내용' }
-  const result = await requestClassification(input, async (url, options) => {
+  const result = await requestClassification(input, idPreset, async (url, options) => {
     assert.equal(url, '/api/classify')
     assert.deepEqual(JSON.parse(options.body), input)
     return { ok: true, json: async () => ({ category: '계약서' }) }
   })
-  assert.equal(result.category, '계약서')
-  await assert.rejects(requestClassification(input, async () => ({ ok: false })))
+  // 서버는 이름으로 답하지만 클라이언트는 받은 즉시 프리셋의 id로 바꾼다. (ADR 0022)
+  assert.equal(result.categoryId, idPreset.categories.find((category) => category.name === '계약서').id)
+  await assert.rejects(requestClassification(input, idPreset, async () => ({ ok: false })))
 })
 test('환경 변수로 제공자 주소·모델·키를 바꾸며 자동 재시도하지 않는다', async () => {
   let options, payload

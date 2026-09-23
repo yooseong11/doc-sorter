@@ -10,10 +10,10 @@ import './ResultRow.css'
 // 드롭다운 목록은 이 화면이 쓰는 프리셋에서 온다. 모듈 상수가 아니다. (ADR 0019)
 function ResultRow({ item, preset, onChangeCategory, onRetry, disabled }) {
   const { id, file, name, size } = item.source
-  const { phase, error, category, quote } = item.classification
+  const { phase, error, categoryId, quote } = item.classification
   const failed = phase.endsWith('-failed')
   const status = failed ? 'failed' : phase
-  const needsReview = failed || category === UNCLASSIFIED
+  const needsReview = failed || categoryId === UNCLASSIFIED
   const [open, setOpen] = useState(needsReview)
   const bodyId = useId()
   const ext = extensionOf(name) || 'file'
@@ -93,16 +93,17 @@ function ResultRow({ item, preset, onChangeCategory, onRetry, disabled }) {
           <span className="result-row__select-wrap">
             <select
               className="result-row__select"
-              value={category}
+              value={categoryId}
               disabled={disabled}
               aria-label={`${name} 카테고리`}
               onChange={(event) => onChangeCategory(id, event.target.value)}
             >
-              {preset.options.map((name) => (
-                <option key={name} value={name}>
-                  {name}
+              {preset.categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
                 </option>
               ))}
+              <option value={UNCLASSIFIED}>{UNCLASSIFIED}</option>
             </select>
             <span className="result-row__select-mark" aria-hidden="true">
               <svg viewBox="0 0 16 16" width="14" height="14">
