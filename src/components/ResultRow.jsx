@@ -15,6 +15,11 @@ function ResultRow({ item, preset, onChangeCategory, onRetry, disabled }) {
   const status = failed ? 'failed' : phase
   const needsReview = failed || categoryId === UNCLASSIFIED
   const [open, setOpen] = useState(needsReview)
+  const [prevNeedsReview, setPrevNeedsReview] = useState(needsReview)
+  if (needsReview !== prevNeedsReview) {
+  setPrevNeedsReview(needsReview)
+  setOpen(needsReview)
+  } 
   const bodyId = useId()
   const ext = extensionOf(name) || 'file'
 
