@@ -9,19 +9,14 @@ import CategoryEditor from '../components/upload/CategoryEditor'
 import { createDocument } from '../lib/state/documentsReducer'
 import { prepareDocument } from '../lib/state/runDocuments'
 import { supportsDirectoryPicker } from '../lib/save/saveFolder'
-import { hasBlockingIssue } from '../../shared/categories.js'
 
 // 폴더 선택 API가 없으면 첫 화면에서 막는다. (ADR 0012)
 // 브라우저 이름이 아니라 기능이 있는지로 판단한다.
 const CAN_PICK_DIRECTORY = supportsDirectoryPicker()
+const DIRECTORY_PICKER_STATUS = CAN_PICK_DIRECTORY ? 'available' : 'unavailable'
 
 function UploadPage({ items, dispatch, categories, onCategoriesChange, classifying, onClassify }) {
   const panelRef = useRef(null)
-  const reading = items.some((item) => item.classification.phase === 'reading')
-  // 이름이 비었거나 겹치면 서버 스키마가 400으로 막는다. 누르기 전에 막는다. (ADR 0020)
-  const categoriesBlocked = hasBlockingIssue(categories)
-  const canClassify = CAN_PICK_DIRECTORY && items.length > 0 && !reading && !classifying && !categoriesBlocked
-  const addDisabled = classifying || !CAN_PICK_DIRECTORY
 
   function addFiles(files) {
     if (!CAN_PICK_DIRECTORY || classifying) return
@@ -73,10 +68,9 @@ function UploadPage({ items, dispatch, categories, onCategoriesChange, classifyi
 
       {items.length > 0 && (
         <UploadActionBar
-          count={items.length}
-          reading={reading}
-          addDisabled={addDisabled}
-          canClassify={canClassify}
+          items={items}
+          categories={categories}
+          directoryPickerStatus={DIRECTORY_PICKER_STATUS}
           classifying={classifying}
           onAdd={() => panelRef.current?.openPicker()}
           onClassify={onClassify}
