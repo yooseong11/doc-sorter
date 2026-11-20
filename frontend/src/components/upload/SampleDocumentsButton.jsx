@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { SAMPLE_DOCUMENTS } from '../sampleDocuments.js'
+import Button from '../common/Button'
+import { SAMPLE_DOCUMENTS } from '../../sampleDocuments.js'
 
 async function fetchSample(sample) {
   const response = await fetch(sample.url)
@@ -26,19 +27,18 @@ function SampleDocumentsButton({ disabled, onFiles }) {
   }
 
   return (
-    <button
-      type="button"
-      className="upload__button upload__button--quiet"
+    <Button
+      variant="quiet"
       onClick={handleClick}
       disabled={disabled || loading}
+      loading={loading}
     >
-      {loading && <span className="upload__spinner" aria-hidden="true" />}
       {loading
           ? '샘플 준비 중…'
           : failed
             ? '불러오기 실패 · 다시 시도'
           : '샘플 데이터로 바로 실행하기'}
-    </button>
+    </Button>
   )
 }
 

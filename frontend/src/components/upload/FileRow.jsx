@@ -1,26 +1,22 @@
-import StatusBadge from './StatusBadge'
-import { extensionOf, formatSize } from '../lib/read/fileKind'
+import StatusBadge from '../common/StatusBadge'
+import FileIcon from '../common/FileIcon'
+import FileMeta from '../common/FileMeta'
 import './FileRow.css'
 
 function FileRow({ item, onRemove, disabled }) {
   const { id, name, size } = item.source
   const { phase, error, readable } = item.classification
   const status = phase === 'ready' ? 'waiting' : phase.endsWith('-failed') ? 'failed' : phase
-  const ext = extensionOf(name) || 'file'
 
   return (
     <li className="file-row">
-      <span className="file-row__icon" aria-hidden="true">
-        {ext.toUpperCase().slice(0, 4)}
-      </span>
+      <FileIcon name={name} />
 
       <div className="file-row__main">
         <p className="file-row__name" title={name}>
           {name}
         </p>
-        <p className="file-row__meta">
-          {formatSize(size)} · {ext.toUpperCase()} 문서
-        </p>
+        <FileMeta name={name} size={size} />
         {!readable && (
           <p className="file-row__note">
             내용을 읽을 수 없어 미분류로 보냅니다. 저장은 됩니다.
