@@ -57,6 +57,7 @@ ADR스킬과 더불어 `AGENTS.md`에 대화를 시작하면 무조건 `STORY_MA
 - [0008 서버로는 앞부분 텍스트만 보낸다](./docs/adr/0008-privacy-text-only.md)
 - [0016 공유 계약은 shared/에 두고 브라우저·서버가 어댑터로 붙는다](./docs/adr/0016-shared-contract-no-src-in-server.md)
 - [0017 lib을 흐름 단계로 나눈다](./docs/adr/0017-lib-by-flow-stage.md)
+- [0024 화면은 pages/, 공통 레이아웃은 layouts/에 둔다](./docs/adr/0024-pages-and-layout.md)
 
 ## 시작
 
