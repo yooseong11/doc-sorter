@@ -1,5 +1,6 @@
-import StatusBadge from './StatusBadge'
-import { extensionOf, formatSize } from '../lib/read/fileKind'
+import StatusBadge from '../common/StatusBadge'
+import FileIcon from '../common/FileIcon'
+import FileMeta from '../common/FileMeta'
 import './SaveRow.css'
 
 // 저장 화면의 한 줄. 원래 파일명 → 저장될 경로 · 상태 배지. (ADR 0011 · 0013)
@@ -12,21 +13,16 @@ function SaveRow({ item, onRetry }) {
   const failed = phase.endsWith('-failed')
   // 계획만 세운 상태(planned)는 아직 대기 중인 것으로 보여준다.
   const status = phase === 'planned' ? 'waiting' : failed ? 'failed' : phase
-  const ext = extensionOf(name) || 'file'
 
   return (
     <li className={`save-row${failed ? ' save-row--failed' : ''}`}>
-      <span className="save-row__icon" aria-hidden="true">
-        {ext.toUpperCase().slice(0, 4)}
-      </span>
+      <FileIcon name={name} />
 
       <span className="save-row__main">
         <span className="save-row__name" title={name}>
           {name}
         </span>
-        <span className="save-row__meta">
-          {formatSize(size)} · {ext.toUpperCase()} 문서
-        </span>
+        <FileMeta name={name} size={size} />
       </span>
 
       <span className="save-row__arrow" aria-hidden="true">

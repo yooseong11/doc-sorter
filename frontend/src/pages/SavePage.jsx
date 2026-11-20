@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import SaveRow from '../components/SaveRow'
-import { UNCLASSIFIED } from '../../shared/categories.js'
+import PageShell from '../components/common/PageShell'
+import PageHeader from '../components/common/PageHeader'
+import { Stat, StatGroup } from '../components/common/Stat'
+import InlineNotice from '../components/common/InlineNotice'
+import SaveFolderPicker from '../components/save/SaveFolderPicker'
+import SavePlanTree from '../components/save/SavePlanTree'
+import SaveList from '../components/save/SaveList'
+import SaveActionBar from '../components/save/SaveActionBar'
 import { groupItems } from '../groupOrder'
 import { logFileName } from '../lib/save/savePath'
 import { planSaves } from '../lib/save/savePlan'
@@ -33,6 +39,14 @@ function SavePage({ items, dispatch, preset, onBack, onRestart, onSavingChange }
     name: group.name,
     count: group.rows.length,
   }))
+
+  const countText = phase === 'idle'
+    ? `${items.length}개를 ${folders.length}개 폴더에 나눠 넣습니다`
+    : phase === 'saving'
+      ? '저장하는 중입니다. 창을 닫지 마세요'
+      : failedCount > 0
+        ? `${savedCount}개 저장됨 · ${failedCount}개 실패`
+        : `${savedCount}개를 모두 저장했습니다`
 
   // StrictMode는 effect를 두 번 실행한다. 되살리는 것도 여기서 해야 한다.
   useEffect(() => {
@@ -115,153 +129,53 @@ function SavePage({ items, dispatch, preset, onBack, onRestart, onSavingChange }
   }
 
   return (
-    <main className="save">
-      <div className="save__glow" aria-hidden="true" />
-
-      <div className="save__head">
-        <div className="save__intro">
-          <h1 className="save__title">폴더에 저장</h1>
-          <p className="save__lead">
+    <PageShell>
+      <PageHeader
+        title="폴더에 저장"
+        lead={
+          <>
             카테고리 이름이 그대로 하위 폴더가 됩니다. 같은 이름의 파일이 있으면
             덮어쓰지 않고 <code>_2</code>를 붙입니다. 저장한 내역은{' '}
             <code>{logName}</code>에 한 줄씩 남습니다.
-          </p>
-        </div>
-
-        <div className="save__summary">
-          <div className="save__stat">
-            <span className="save__stat-value">{items.length}</span>
-            <span className="save__stat-label">전체</span>
-          </div>
+          </>
+        }
+      >
+        <StatGroup>
+          <Stat value={items.length} label="전체" />
           {(phase === 'saving' || phase === 'done') && (
-            <div className="save__stat save__stat--ok">
-              <span className="save__stat-value">{savedCount}</span>
-              <span className="save__stat-label">저장됨</span>
-            </div>
+            <Stat value={savedCount} label="저장됨" tone="ok" />
           )}
           {failedCount > 0 && (
-            <div className="save__stat save__stat--failed">
-              <span className="save__stat-value">{failedCount}</span>
-              <span className="save__stat-label">실패</span>
-            </div>
+            <Stat value={failedCount} label="실패" tone="danger" />
           )}
-        </div>
-      </div>
+        </StatGroup>
+      </PageHeader>
 
-      <section className="save__folder">
-        <div className="save__folder-main">
-          <span className="save__folder-label">최상위 폴더</span>
-          <span className={`save__folder-path${folder ? '' : ' save__folder-path--empty'}`}>
-            {folder || '아직 고르지 않았습니다'}
-          </span>
-        </div>
-        <button
-          type="button"
-          className="save__button save__button--quiet"
-          onClick={handlePickFolder}
-          disabled={phase === 'saving'}
-        >
-          {folder ? '폴더 바꾸기' : '폴더 고르기'}
-        </button>
-      </section>
+      <SaveFolderPicker
+        folder={folder}
+        saving={phase === 'saving'}
+        onPick={handlePickFolder}
+      />
 
-      {notice && (
-        <p className="save__notice" role="status">
-          {notice}
-        </p>
-      )}
+      {notice && <InlineNotice>{notice}</InlineNotice>}
 
       {phase === 'idle' ? (
-        <section className="save__plan">
-          <header className="save__plan-head">
-            <h2 className="save__plan-title">이렇게 들어갑니다</h2>
-            <span className="save__plan-hint">
-              이미 있는 폴더는 새로 만들지 않고 그대로 씁니다
-            </span>
-          </header>
-          <ul className="save__tree">
-            {folders.map((group) => (
-              <li
-                key={group.name}
-                className={`save__tree-item${group.name === UNCLASSIFIED ? ' save__tree-item--review' : ''}`}
-              >
-                <span className="save__tree-name">{group.name}/</span>
-                <span className="save__tree-count">{group.count}개</span>
-                {group.name === UNCLASSIFIED && (
-                  <span className="save__tree-note">
-                    확인이 필요한 파일도 폴더 하나에 모읍니다
-                  </span>
-                )}
-              </li>
-            ))}
-            <li className="save__tree-item save__tree-item--log">
-              <span className="save__tree-name">{logName}</span>
-              <span className="save__tree-note">
-                같은 날 다시 저장하면 이어 씁니다
-              </span>
-            </li>
-          </ul>
-        </section>
+        <SavePlanTree folders={folders} logName={logName} />
       ) : (
-        <section className="save__list-card">
-          <ul className="save__list">
-            {items.map((row) => (
-              <SaveRow key={row.source.id} item={row} onRetry={handleRetryFailed} />
-            ))}
-          </ul>
-        </section>
+        <SaveList items={items} onRetry={handleRetryFailed} />
       )}
 
-      <div className="save__bar">
-        <p className="save__count">
-          {phase === 'idle' &&
-            `${items.length}개를 ${folders.length}개 폴더에 나눠 넣습니다`}
-          {phase === 'saving' && '저장하는 중입니다. 창을 닫지 마세요'}
-          {phase === 'done' &&
-            (failedCount > 0
-              ? `${savedCount}개 저장됨 · ${failedCount}개 실패`
-              : `${savedCount}개를 모두 저장했습니다`)}
-        </p>
-
-        <div className="save__bar-actions">
-          {phase === 'done' ? (
-            <>
-              {failedCount > 0 && (
-                <button
-                  type="button"
-                  className="save__button save__button--quiet"
-                  onClick={() => handleRetryFailed()}
-                >
-                  실패분 다시 시도
-                </button>
-              )}
-              <button type="button" className="save__button" onClick={onRestart}>
-                새 파일 분류하기
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                className="save__button save__button--quiet"
-                onClick={onBack}
-                disabled={phase === 'saving'}
-              >
-                확인 화면으로
-              </button>
-              <button
-                type="button"
-                className="save__button"
-                onClick={() => runSave(items)}
-                disabled={phase === 'saving' || !folder}
-              >
-                저장 시작
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    </main>
+      <SaveActionBar
+        phase={phase}
+        failedCount={failedCount}
+        canSave={Boolean(folder)}
+        count={countText}
+        onRetry={() => handleRetryFailed()}
+        onRestart={onRestart}
+        onBack={onBack}
+        onSave={() => runSave(items)}
+      />
+    </PageShell>
   )
 }
 
