@@ -1,0 +1,26 @@
+.page {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-20) var(--space-6) var(--space-16);
+}
+
+/* 상단 sky 광원 — 모든 화면이 같은 자리에 둔다 */
+.page__glow {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 420px;
+  background: radial-gradient(
+    60% 100% at 50% 0%,
+    var(--color-accent-glow) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+@media (max-width: 880px) {
+  .page {
+    padding-top: var(--space-12);
+  }
+}

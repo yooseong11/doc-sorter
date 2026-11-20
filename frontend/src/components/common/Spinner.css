@@ -1,0 +1,20 @@
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: var(--border-thin) solid var(--color-accent-line);
+  border-top-color: var(--color-accent-quiet);
+  border-radius: var(--radius-pill);
+  animation: spinner-spin 700ms linear infinite;
+}
+
+@keyframes spinner-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2400ms;
+  }
+}
