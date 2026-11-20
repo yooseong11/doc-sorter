@@ -29,3 +29,9 @@ dist-ssr
 
 # Cowork 작업 중 생기는 폴더
 Claude outputs/
+
+
+#python
+
+.venv
+__pycache__
