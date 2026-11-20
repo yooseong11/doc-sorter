@@ -1,5 +1,6 @@
 import { useMemo, useReducer, useState } from 'react'
 import { Navigate, Route, Routes, useBlocker, useNavigate } from 'react-router'
+import MainLayout from './layouts/MainLayout'
 import UploadPage from './pages/UploadPage'
 import ConfirmPage from './pages/ConfirmPage'
 import SavePage from './pages/SavePage'
@@ -7,7 +8,6 @@ import { documentsReducer } from './lib/state/documentsReducer'
 import { useClassification } from './lib/state/useClassification'
 import { categoryPreset } from '../shared/categories.js'
 import { useCategories } from './lib/state/useCategories'
-import './App.css'
 
 function App() {
   const navigate = useNavigate()
@@ -29,8 +29,8 @@ function App() {
   )
 
   return (
-    <div className="app">
-      <Routes>
+    <Routes>
+      <Route element={<MainLayout />}>
         <Route path="/" element={<UploadPage items={items} dispatch={dispatch} categories={categories} onCategoriesChange={setCategories} classifying={busy} onClassify={() => runClassification()} />} />
         <Route path="/confirm" element={canReview
           ? <ConfirmPage items={items} dispatch={dispatch} preset={preset} busy={busy} onRetry={runClassification} onBack={() => navigate('/')} onNext={() => navigate('/save')} />
@@ -39,25 +39,8 @@ function App() {
           ? <SavePage items={items} dispatch={dispatch} preset={preset} onSavingChange={setSaving} onBack={() => navigate('/confirm')} onRestart={() => { dispatch({ type: 'reset' }); navigate('/', { replace: true }) }} />
           : <Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-
-      <a
-        className="app__github-link"
-        href="https://github.com/yooseong11/doc-sorter"
-        target="_blank"
-        rel="noreferrer"
-      >
-        <span className="app__github-icon" aria-hidden="true">
-          <svg viewBox="0 0 19 19" width="20" height="20">
-            <use href="/icons.svg#github-icon" />
-          </svg>
-        </span>
-        <span className="app__github-copy">
-          <strong>제작 과정 살펴보기</strong>
-          <span>기획·AI활용방법·코드를 구경해보세요!</span>
-        </span>
-      </a>
-    </div>
+      </Route>
+    </Routes>
   )
 }
 export default App

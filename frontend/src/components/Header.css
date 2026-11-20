@@ -1,0 +1,86 @@
+/* 공통 Header — 브랜드와 진행 단계. 화면 폭은 페이지(960px)와 맞춘다. */
+.header {
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.header__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-6);
+}
+
+.header__brand {
+  color: var(--color-text);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  text-decoration: none;
+  transition: color var(--ease);
+}
+
+.header__brand:hover {
+  color: var(--color-accent-quiet);
+}
+
+.header__steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.header__step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  transition: color var(--ease), background var(--ease), border-color var(--ease);
+}
+
+.header__step:hover {
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.header__step--active {
+  border-color: var(--color-accent-line);
+  background: var(--color-accent-soft);
+  color: var(--color-accent-quiet);
+}
+
+.header__step-index {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-surface-raised);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.header__step--active .header__step-index {
+  background: var(--color-accent);
+  color: var(--color-accent-on);
+}
+
+@media (max-width: 640px) {
+  .header__inner {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .header__step {
+    padding: var(--space-1) var(--space-2);
+  }
+}
