@@ -1,0 +1,33 @@
+/* 카테고리 드롭다운 — 바꾸면 해당 묶음으로 옮겨간다. (ADR 0004) */
+.result-row__select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.result-row__select {
+  appearance: none;
+  min-width: 128px;
+  padding: var(--space-2) var(--space-8) var(--space-2) var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition: border-color var(--ease);
+}
+
+.result-row__select:hover {
+  border-color: var(--color-accent-line);
+}
+
+.result-row__select-mark {
+  position: absolute;
+  right: var(--space-3);
+  display: grid;
+  place-items: center;
+  color: var(--color-text-faint);
+  pointer-events: none;
+}

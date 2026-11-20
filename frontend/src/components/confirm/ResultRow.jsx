@@ -1,7 +1,9 @@
 import { useId, useState } from 'react'
-import StatusBadge from './StatusBadge'
-import { UNCLASSIFIED } from '../../shared/categories.js'
-import { extensionOf, formatSize } from '../lib/read/fileKind'
+import StatusBadge from '../common/StatusBadge'
+import FileIcon from '../common/FileIcon'
+import FileMeta from '../common/FileMeta'
+import CategorySelect from './CategorySelect'
+import { UNCLASSIFIED } from '../../../shared/categories.js'
 import './ResultRow.css'
 
 // 확인 화면의 한 줄. 파일명 · 카테고리 드롭다운 · 근거 한 줄. (ADR 0004)
@@ -21,7 +23,6 @@ function ResultRow({ item, preset, onChangeCategory, onRetry, disabled }) {
     setOpen(needsReview)
   }
   const bodyId = useId()
-  const ext = extensionOf(name) || 'file'
 
   function handlePreview() {
     // 파일이 이미 브라우저에 있어서 서버 없이 바로 띄운다. (ADR 0004)
@@ -56,9 +57,7 @@ function ResultRow({ item, preset, onChangeCategory, onRetry, disabled }) {
             </svg>
           </span>
 
-          <span className="result-row__icon" aria-hidden="true">
-            {ext.toUpperCase().slice(0, 4)}
-          </span>
+          <FileIcon name={name} />
 
           <span className="result-row__main">
             <span className="result-row__name" title={name}>
@@ -83,9 +82,7 @@ function ResultRow({ item, preset, onChangeCategory, onRetry, disabled }) {
               )}
               {name}
             </span>
-            <span className="result-row__meta">
-              {formatSize(size)} · {ext.toUpperCase()} 문서
-            </span>
+            <FileMeta name={name} size={size} />
           </span>
 
         </button>
@@ -95,34 +92,13 @@ function ResultRow({ item, preset, onChangeCategory, onRetry, disabled }) {
             <StatusBadge status={status} title={error} />
           )}
 
-          <span className="result-row__select-wrap">
-            <select
-              className="result-row__select"
-              value={categoryId}
-              disabled={disabled}
-              aria-label={`${name} 카테고리`}
-              onChange={(event) => onChangeCategory(id, event.target.value)}
-            >
-              {preset.categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-              <option value={UNCLASSIFIED}>{UNCLASSIFIED}</option>
-            </select>
-            <span className="result-row__select-mark" aria-hidden="true">
-              <svg viewBox="0 0 16 16" width="14" height="14">
-                <path
-                  d="M4 6l4 4 4-4"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </span>
-          </span>
+          <CategorySelect
+            value={categoryId}
+            categories={preset.categories}
+            onChange={(nextCategoryId) => onChangeCategory(id, nextCategoryId)}
+            disabled={disabled}
+            ariaLabel={`${name} 카테고리`}
+          />
         </div>
       </div>
 

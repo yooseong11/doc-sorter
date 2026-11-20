@@ -30,20 +30,6 @@
   text-align: left;
 }
 
-.result-row__icon {
-  flex: 0 0 auto;
-  display: grid;
-  place-items: center;
-  width: var(--space-10);
-  height: var(--space-10);
-  border: 1px solid var(--color-accent-line);
-  border-radius: var(--radius-md);
-  background: var(--color-accent-soft);
-  color: var(--color-accent-quiet);
-  font-size: var(--text-xs);
-  letter-spacing: 0.02em;
-}
-
 .result-row__main {
   flex: 1 1 auto;
   min-width: 0;
@@ -67,13 +53,6 @@
   color: var(--color-warn);
 }
 
-.result-row__meta {
-  display: block;
-  margin-top: var(--space-1);
-  font-size: var(--text-xs);
-  color: var(--color-text-faint);
-}
-
 /* 펼침 표시는 파일명 왼쪽에 둔다.
    오른쪽 드롭다운 화살표와 나란히 두면 같은 버튼으로 보인다. */
 .result-row__chevron {
@@ -95,40 +74,6 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-}
-
-/* 카테고리 드롭다운 — 바꾸면 해당 묶음으로 옮겨간다. (ADR 0004) */
-.result-row__select-wrap {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-}
-
-.result-row__select {
-  appearance: none;
-  min-width: 128px;
-  padding: var(--space-2) var(--space-8) var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-raised);
-  color: var(--color-text);
-  font: inherit;
-  font-size: var(--text-xs);
-  cursor: pointer;
-  transition: border-color var(--ease);
-}
-
-.result-row__select:hover {
-  border-color: var(--color-accent-line);
-}
-
-.result-row__select-mark {
-  position: absolute;
-  right: var(--space-3);
-  display: grid;
-  place-items: center;
-  color: var(--color-text-faint);
-  pointer-events: none;
 }
 
 /* 펼친 내용 — 아이콘 너비만큼 들여 쓴다 */

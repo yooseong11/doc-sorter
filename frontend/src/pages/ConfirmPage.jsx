@@ -1,4 +1,9 @@
-import ResultRow from '../components/ResultRow'
+import PageShell from '../components/common/PageShell'
+import PageHeader from '../components/common/PageHeader'
+import { Stat, StatGroup } from '../components/common/Stat'
+import InlineNotice from '../components/common/InlineNotice'
+import CategoryGroup from '../components/confirm/CategoryGroup'
+import ConfirmActionBar from '../components/confirm/ConfirmActionBar'
 import { UNCLASSIFIED } from '../../shared/categories.js'
 import { groupItems } from '../groupOrder'
 import './ConfirmPage.css'
@@ -25,97 +30,52 @@ function ConfirmPage({ items: rows, dispatch, preset, busy, onRetry, onBack, onN
   }
 
   return (
-    <main className="confirm">
-      <div className="confirm__glow" aria-hidden="true" />
-
-      <div className="confirm__head">
-        <div className="confirm__intro">
-          <h1 className="confirm__title">분류 결과 확인</h1>
-          <p className="confirm__lead">
+    <PageShell>
+      <PageHeader
+        title="분류 결과 확인"
+        lead={
+          <>
             카테고리별로 묶어 두었습니다. 틀린 것만 드롭다운으로 바꾸면 그
             묶음으로 옮겨갑니다. 파일명 줄을 누르면 근거 문장이 펼쳐집니다.
-          </p>
-        </div>
-
-        <div className="confirm__summary">
-          <div className="confirm__stat">
-            <span className="confirm__stat-value">{rows.length}</span>
-            <span className="confirm__stat-label">전체</span>
-          </div>
-          <div
-            className={`confirm__stat${reviewCount > 0 ? ' confirm__stat--review' : ''}`}
-          >
-            <span className="confirm__stat-value">{reviewCount}</span>
-            <span className="confirm__stat-label">확인 필요</span>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      >
+        <StatGroup>
+          <Stat value={rows.length} label="전체" />
+          <Stat
+            value={reviewCount}
+            label="확인 필요"
+            tone={reviewCount > 0 ? 'warn' : 'default'}
+          />
+        </StatGroup>
+      </PageHeader>
 
       {allUnclassified && (
-        <p className="confirm__notice" role="status">
+        <InlineNotice>
           분류된 파일이 없습니다. 카테고리 설명을 확인해 주세요.
-        </p>
+        </InlineNotice>
       )}
 
       <div className="confirm__groups">
-        {groups.map((group) => {
-          const unclassified = group.name === UNCLASSIFIED
-          return (
-            <section
-              key={group.name}
-              className={`confirm__group${unclassified ? ' confirm__group--review' : ''}`}
-            >
-              <header className="confirm__group-head">
-                <h2 className="confirm__group-name">{group.name}</h2>
-                <span className="confirm__group-count">
-                  {group.rows.length}개
-                </span>
-                <p className="confirm__group-hint">
-                  {unclassified
-                    ? '카테고리를 직접 골라 주세요.'
-                    : preset.hintOf(group.name)}
-                </p>
-              </header>
-
-              <ul className="confirm__list">
-                {group.rows.map((row) => (
-                  <ResultRow
-                    key={row.source.id}
-                    item={row}
-                    preset={preset}
-                    onChangeCategory={handleChangeCategory}
-                    onRetry={onRetry}
-                    disabled={busy}
-                  />
-                ))}
-              </ul>
-            </section>
-          )
-        })}
-      </div>
-
-      <div className="confirm__bar">
-        <p className="confirm__count">
-          {reviewCount > 0
-            ? `확인이 필요한 파일이 ${reviewCount}개 있습니다`
-            : '모두 확인했습니다'}
-        </p>
-
-        <div className="confirm__bar-actions">
-          <button
-            type="button"
-            className="confirm__button confirm__button--quiet"
-            onClick={onBack}
+        {groups.map((group) => (
+          <CategoryGroup
+            key={group.name}
+            group={group}
+            preset={preset}
+            onChangeCategory={handleChangeCategory}
+            onRetry={onRetry}
             disabled={busy}
-          >
-            파일 다시 고르기
-          </button>
-          <button type="button" className="confirm__button" onClick={onNext} disabled={busy}>
-            저장할 폴더 고르기
-          </button>
-        </div>
+          />
+        ))}
       </div>
-    </main>
+
+      <ConfirmActionBar
+        reviewCount={reviewCount}
+        busy={busy}
+        onBack={onBack}
+        onNext={onNext}
+      />
+    </PageShell>
   )
 }
 
