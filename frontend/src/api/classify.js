@@ -1,6 +1,6 @@
 import * as v from 'valibot'
-import { inputSchema } from '../shared/classifyContract.js'
-import { createClassifier } from '../server/classifier.js'
+import { inputSchema } from '../../shared/classifyContract.js'
+import { createClassifier } from '../../server/classifier.js'
 
 export function createHandler(getClassifier = () => createClassifier(process.env)) {
   return async (req, res) => {
