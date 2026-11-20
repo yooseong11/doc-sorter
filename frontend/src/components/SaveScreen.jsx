@@ -18,8 +18,8 @@ import './SaveScreen.css'
 // 성공분은 되돌리지 않고 실패분만 다시 시도한다. (ADR 0011 · 0013)
 // 미분류도 예외 없이 `미분류` 폴더에 넣는다. (ADR 0014)
 
-function SaveScreen({ items, dispatch, preset, onBack, onRestart }) {
-  const [phase, setPhase] = useState('idle')
+function SaveScreen({ items, dispatch, preset, onBack, onRestart, onSavingChange }) {
+  const [phase, setPhase] = useState(() => items.some((item) => item.save.phase !== 'waiting') ? 'done' : 'idle')
   const [notice, setNotice] = useState('')
   const [folder, setFolder] = useState('')
   const rootRef = useRef(null)
@@ -84,6 +84,7 @@ function SaveScreen({ items, dispatch, preset, onBack, onRestart }) {
     }
     setNotice('')
     setPhase('saving')
+    onSavingChange(true)
 
     const onRow = (id, patch) => {
       if (alive.current) dispatch({ type: 'save', id, patch })
@@ -100,6 +101,7 @@ function SaveScreen({ items, dispatch, preset, onBack, onRestart }) {
       dispatch({ type: 'plan', rows: planned })
       await saveAll(planned, { rootHandle, onRow, logName })
     } finally {
+      onSavingChange(false)
       if (alive.current) setPhase('done')
     }
   }

@@ -1,43 +1,45 @@
-import { useMemo, useReducer, useRef, useState } from 'react'
+import { useMemo, useReducer, useState } from 'react'
+import { Navigate, Route, Routes, useBlocker, useNavigate } from 'react-router'
 import UploadScreen from './components/UploadScreen'
 import ConfirmScreen from './components/ConfirmScreen'
 import SaveScreen from './components/SaveScreen'
 import { documentsReducer } from './lib/state/documentsReducer'
-import { classifyDocuments } from './lib/state/runDocuments'
+import { useClassification } from './lib/state/useClassification'
 import { categoryPreset } from '../shared/categories.js'
 import { useCategories } from './lib/state/useCategories'
 import './App.css'
 
 function App() {
-  const [screen, setScreen] = useState('s1')
+  const navigate = useNavigate()
+  const [saving, setSaving] = useState(false)
   const [items, dispatch] = useReducer(documentsReducer, [])
   // 편집 가능한 목록이 원본이고, 화면과 계약이 쓰는 조회는 전부 여기서 파생시킨다. (ADR 0019)
   // 편집 중 행을 구분할 id. 계약에는 싣지 않는다. buildClassificationInput이 걸러낸다. (ADR 0008)
   const [categories, setCategories] = useCategories()
   const preset = useMemo(() => categoryPreset(categories), [categories])
-  const [busy, setBusy] = useState(false)
-  const running = useRef(false)
+  const { busy, runClassification } = useClassification({
+    items, dispatch, preset, onComplete: () => navigate('/confirm'),
+  })
 
-  async function runClassification(id) {
-    if (running.current || items.some((item) => item.classification.phase === 'reading')) return
-    running.current = true
-    setBusy(true)
-    try {
-      await classifyDocuments(id ? items.filter((item) => item.source.id === id) : items, {
-        dispatch, preset, retry: Boolean(id),
-      })
-      setScreen('s2')
-    } finally {
-      running.current = false
-      setBusy(false)
-    }
-  }
+  // 처리 중에는 브라우저 뒤로 가기도 막아 실행 중인 화면을 유지한다.
+  useBlocker(({ historyAction }) => historyAction === 'POP' && (busy || saving))
+
+  const canReview = items.length > 0 && items.every((item) =>
+    !['reading', 'ready', 'waiting'].includes(item.classification.phase),
+  )
 
   return (
     <div className="app">
-      {screen === 's1' && <UploadScreen items={items} dispatch={dispatch} categories={categories} onCategoriesChange={setCategories} classifying={busy} onClassify={() => runClassification()} />}
-      {screen === 's2' && <ConfirmScreen items={items} dispatch={dispatch} preset={preset} busy={busy} onRetry={runClassification} onBack={() => setScreen('s1')} onNext={() => setScreen('s3')} />}
-      {screen === 's3' && <SaveScreen items={items} dispatch={dispatch} preset={preset} onBack={() => setScreen('s2')} onRestart={() => { dispatch({ type: 'reset' }); setScreen('s1') }} />}
+      <Routes>
+        <Route path="/" element={<UploadScreen items={items} dispatch={dispatch} categories={categories} onCategoriesChange={setCategories} classifying={busy} onClassify={() => runClassification()} />} />
+        <Route path="/confirm" element={canReview
+          ? <ConfirmScreen items={items} dispatch={dispatch} preset={preset} busy={busy} onRetry={runClassification} onBack={() => navigate('/')} onNext={() => navigate('/save')} />
+          : <Navigate to="/" replace />} />
+        <Route path="/save" element={canReview
+          ? <SaveScreen items={items} dispatch={dispatch} preset={preset} onSavingChange={setSaving} onBack={() => navigate('/confirm')} onRestart={() => { dispatch({ type: 'reset' }); navigate('/', { replace: true }) }} />
+          : <Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
 
       <a
         className="app__github-link"
