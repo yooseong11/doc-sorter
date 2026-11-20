@@ -1,12 +1,12 @@
-import ResultRow from './ResultRow'
+import ResultRow from '../components/ResultRow'
 import { UNCLASSIFIED } from '../../shared/categories.js'
 import { groupItems } from '../groupOrder'
-import './ConfirmScreen.css'
+import './ConfirmPage.css'
 
 // S2 확인 화면 — 카테고리별로 묶어서 보여주고, 행마다 드롭다운으로 바꾼다. (ADR 0004)
 // 실패한 파일도 목록에 남기고 사유와 재시도 버튼을 붙인다. (ADR 0013)
 
-function ConfirmScreen({ items: rows, dispatch, preset, busy, onRetry, onBack, onNext }) {
+function ConfirmPage({ items: rows, dispatch, preset, busy, onRetry, onBack, onNext }) {
   const groups = groupItems(rows, preset)
 
   const reviewCount = rows.filter(
@@ -119,4 +119,4 @@ function ConfirmScreen({ items: rows, dispatch, preset, busy, onRetry, onBack, o
   )
 }
 
-export default ConfirmScreen
+export default ConfirmPage

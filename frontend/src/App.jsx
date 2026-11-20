@@ -1,8 +1,8 @@
 import { useMemo, useReducer, useState } from 'react'
 import { Navigate, Route, Routes, useBlocker, useNavigate } from 'react-router'
-import UploadScreen from './components/UploadScreen'
-import ConfirmScreen from './components/ConfirmScreen'
-import SaveScreen from './components/SaveScreen'
+import UploadPage from './pages/UploadPage'
+import ConfirmPage from './pages/ConfirmPage'
+import SavePage from './pages/SavePage'
 import { documentsReducer } from './lib/state/documentsReducer'
 import { useClassification } from './lib/state/useClassification'
 import { categoryPreset } from '../shared/categories.js'
@@ -31,12 +31,12 @@ function App() {
   return (
     <div className="app">
       <Routes>
-        <Route path="/" element={<UploadScreen items={items} dispatch={dispatch} categories={categories} onCategoriesChange={setCategories} classifying={busy} onClassify={() => runClassification()} />} />
+        <Route path="/" element={<UploadPage items={items} dispatch={dispatch} categories={categories} onCategoriesChange={setCategories} classifying={busy} onClassify={() => runClassification()} />} />
         <Route path="/confirm" element={canReview
-          ? <ConfirmScreen items={items} dispatch={dispatch} preset={preset} busy={busy} onRetry={runClassification} onBack={() => navigate('/')} onNext={() => navigate('/save')} />
+          ? <ConfirmPage items={items} dispatch={dispatch} preset={preset} busy={busy} onRetry={runClassification} onBack={() => navigate('/')} onNext={() => navigate('/save')} />
           : <Navigate to="/" replace />} />
         <Route path="/save" element={canReview
-          ? <SaveScreen items={items} dispatch={dispatch} preset={preset} onSavingChange={setSaving} onBack={() => navigate('/confirm')} onRestart={() => { dispatch({ type: 'reset' }); navigate('/', { replace: true }) }} />
+          ? <SavePage items={items} dispatch={dispatch} preset={preset} onSavingChange={setSaving} onBack={() => navigate('/confirm')} onRestart={() => { dispatch({ type: 'reset' }); navigate('/', { replace: true }) }} />
           : <Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

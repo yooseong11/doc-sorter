@@ -1,12 +1,12 @@
 import { useRef, useState } from 'react'
-import FileRow from './FileRow'
-import CategoryEditor from './CategoryEditor'
-import SampleDocumentsButton from './SampleDocumentsButton'
+import FileRow from '../components/FileRow'
+import CategoryEditor from '../components/CategoryEditor'
+import SampleDocumentsButton from '../components/SampleDocumentsButton'
 import { createDocument } from '../lib/state/documentsReducer'
 import { prepareDocument } from '../lib/state/runDocuments'
 import { supportsDirectoryPicker } from '../lib/save/saveFolder'
 import { hasBlockingIssue } from '../../shared/categories.js'
-import './UploadScreen.css'
+import './UploadPage.css'
 
 // 폴더 선택 API가 없으면 첫 화면에서 막는다. (ADR 0012)
 // 브라우저 이름이 아니라 기능이 있는지로 판단한다.
@@ -22,7 +22,7 @@ function isAccepted(file) {
   return ACCEPT_EXTENSIONS.some((extension) => name.endsWith(extension))
 }
 
-function UploadScreen({ items, dispatch, categories, onCategoriesChange, classifying, onClassify }) {
+function UploadPage({ items, dispatch, categories, onCategoriesChange, classifying, onClassify }) {
   const inputRef = useRef(null)
   const [dragging, setDragging] = useState(false)
   const reading = items.some((item) => item.classification.phase === 'reading')
@@ -250,4 +250,4 @@ function UploadScreen({ items, dispatch, categories, onCategoriesChange, classif
   )
 }
 
-export default UploadScreen
+export default UploadPage

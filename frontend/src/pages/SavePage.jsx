@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import SaveRow from './SaveRow'
+import SaveRow from '../components/SaveRow'
 import { UNCLASSIFIED } from '../../shared/categories.js'
 import { groupItems } from '../groupOrder'
 import { logFileName } from '../lib/save/savePath'
@@ -12,13 +12,13 @@ import {
   recallDirectory,
   rememberDirectory,
 } from '../lib/save/saveFolder'
-import './SaveScreen.css'
+import './SavePage.css'
 
 // S3 저장 화면 — 최상위 폴더를 고르고 카테고리 폴더에 넣은 뒤 기록표를 남긴다.
 // 성공분은 되돌리지 않고 실패분만 다시 시도한다. (ADR 0011 · 0013)
 // 미분류도 예외 없이 `미분류` 폴더에 넣는다. (ADR 0014)
 
-function SaveScreen({ items, dispatch, preset, onBack, onRestart, onSavingChange }) {
+function SavePage({ items, dispatch, preset, onBack, onRestart, onSavingChange }) {
   const [phase, setPhase] = useState(() => items.some((item) => item.save.phase !== 'waiting') ? 'done' : 'idle')
   const [notice, setNotice] = useState('')
   const [folder, setFolder] = useState('')
@@ -265,4 +265,4 @@ function SaveScreen({ items, dispatch, preset, onBack, onRestart, onSavingChange
   )
 }
 
-export default SaveScreen
+export default SavePage
