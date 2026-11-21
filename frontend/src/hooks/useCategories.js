@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { defaultCategories, recallCategories, rememberCategories } from './categoryStore'
+import { defaultCategories, recallCategories, rememberCategories } from '../lib/state/categoryStore'
 
 // 편집 가능한 프리셋의 로딩·저장 생명주기를 관리한다. (ADR 0021)
 export function useCategories() {

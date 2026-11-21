@@ -5,9 +5,9 @@ import UploadPage from './pages/UploadPage'
 import ConfirmPage from './pages/ConfirmPage'
 import SavePage from './pages/SavePage'
 import { documentsReducer } from './lib/state/documentsReducer'
-import { useClassification } from './lib/state/useClassification'
+import { useClassification } from './hooks/useClassification'
 import { categoryPreset } from '../shared/categories.js'
-import { useCategories } from './lib/state/useCategories'
+import { useCategories } from './hooks/useCategories'
 
 function App() {
   const navigate = useNavigate()

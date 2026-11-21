@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { beforeEach, expect, test, vi } from 'vitest'
 import { DEFAULT_CATEGORIES } from '../shared/categories.js'
 import { recallCategories, rememberCategories } from '../src/lib/state/categoryStore.js'
-import { useCategories } from '../src/lib/state/useCategories.js'
+import { useCategories } from '../src/hooks/useCategories.js'
 
 // 진짜 IndexedDB 대신 가짜 함수로 바꾼다. defaultCategories 같은 나머지는 그대로 쓴다.
 vi.mock('../src/lib/state/categoryStore.js', async (importOriginal) => ({

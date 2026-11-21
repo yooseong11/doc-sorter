@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { classifyDocuments } from './runDocuments'
+import { classifyDocuments } from '../lib/state/runDocuments'
 
 export function useClassification({ items, dispatch, preset, onComplete }) {
   const [busy, setBusy] = useState(false)
