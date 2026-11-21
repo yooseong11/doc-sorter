@@ -1,6 +1,7 @@
 import StatusBadge from '../common/StatusBadge'
 import FileIcon from '../common/FileIcon'
 import FileMeta from '../common/FileMeta'
+import { SAVE_PHASE } from '../../lib/state/savePhases'
 import './SaveRow.css'
 
 // 저장 화면의 한 줄. 원래 파일명 → 저장될 경로 · 상태 배지. (ADR 0011 · 0013)
@@ -12,7 +13,7 @@ function SaveRow({ item, onRetry }) {
   const { phase, error, savedName, target, renamed } = item.save
   const failed = phase.endsWith('-failed')
   // 계획만 세운 상태(planned)는 아직 대기 중인 것으로 보여준다.
-  const status = phase === 'planned' ? 'waiting' : failed ? 'failed' : phase
+  const status = phase === SAVE_PHASE.PLANNED ? 'waiting' : failed ? 'failed' : phase
 
   return (
     <li className={`save-row${failed ? ' save-row--failed' : ''}`}>

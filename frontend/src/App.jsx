@@ -8,6 +8,7 @@ import { documentsReducer } from './lib/state/documentsReducer'
 import { useClassification } from './hooks/useClassification'
 import { categoryPreset } from '../shared/categories.js'
 import { useCategories } from './hooks/useCategories'
+import { CLASSIFICATION_PHASE } from './lib/state/classificationPhases'
 
 function App() {
   const navigate = useNavigate()
@@ -25,7 +26,7 @@ function App() {
   useBlocker(({ historyAction }) => historyAction === 'POP' && (busy || saving))
 
   const canReview = items.length > 0 && items.every((item) =>
-    !['reading', 'ready', 'waiting'].includes(item.classification.phase),
+    ![CLASSIFICATION_PHASE.READING, CLASSIFICATION_PHASE.READY].includes(item.classification.phase),
   )
 
   return (

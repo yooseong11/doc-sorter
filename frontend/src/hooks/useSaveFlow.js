@@ -3,6 +3,7 @@ import { groupItems } from '../groupOrder'
 import { logFileName } from '../lib/save/savePath'
 import { planSaves } from '../lib/save/savePlan'
 import { saveAll } from '../lib/save/saveFiles'
+import { SAVE_PHASE } from '../lib/state/savePhases'
 import {
   ensurePermission,
   folderLabel,
@@ -12,14 +13,14 @@ import {
 } from '../lib/save/saveFolder'
 
 export function useSaveFlow({ items, dispatch, preset, onSavingChange }) {
-  const [phase, setPhase] = useState(() => items.some((item) => item.save.phase !== 'waiting') ? 'done' : 'idle')
+  const [phase, setPhase] = useState(() => items.some((item) => item.save.phase !== SAVE_PHASE.WAITING) ? 'done' : 'idle')
   const [notice, setNotice] = useState('')
   const [folder, setFolder] = useState('')
   const rootRef = useRef(null)
   const alive = useRef(true)
   const logName = logFileName()
 
-  const savedCount = items.filter((item) => item.save.phase === 'saved').length
+  const savedCount = items.filter((item) => item.save.phase === SAVE_PHASE.SAVED).length
   const failedCount = items.filter((item) => item.save.phase.endsWith('-failed')).length
   const folders = groupItems(items, preset).map((group) => ({
     name: group.name,
@@ -27,7 +28,7 @@ export function useSaveFlow({ items, dispatch, preset, onSavingChange }) {
   }))
   const countText = phase === 'idle'
     ? `${items.length}개를 ${folders.length}개 폴더에 나눠 넣습니다`
-    : phase === 'saving'
+    : phase === SAVE_PHASE.SAVING
       ? '저장하는 중입니다. 창을 닫지 마세요'
       : failedCount > 0
         ? `${savedCount}개 저장됨 · ${failedCount}개 실패`
@@ -80,7 +81,7 @@ export function useSaveFlow({ items, dispatch, preset, onSavingChange }) {
       return
     }
     setNotice('')
-    setPhase('saving')
+    setPhase(SAVE_PHASE.SAVING)
     onSavingChange(true)
 
     const onRow = (id, patch) => {

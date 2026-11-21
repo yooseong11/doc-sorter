@@ -1,4 +1,6 @@
 import './StatusBadge.css'
+import { CLASSIFICATION_PHASE } from '../../lib/state/classificationPhases'
+import { SAVE_PHASE } from '../../lib/state/savePhases'
 
 // 파일별 상태 (ADR 0013): 대기 → 읽는 중 → 분류 중 → 분류됨 / 실패
 // 저장 화면(S3)의 저장 중·저장됨도 같은 배지를 쓴다. (ADR 0011)
@@ -13,7 +15,7 @@ const LABELS = {
   unreadable: '읽을 수 없음',
 }
 
-const LOADING = ['reading', 'classifying', 'saving']
+const LOADING = [CLASSIFICATION_PHASE.READING, CLASSIFICATION_PHASE.CLASSIFYING, SAVE_PHASE.SAVING]
 
 function StatusBadge({ status, title }) {
   const loading = LOADING.includes(status)

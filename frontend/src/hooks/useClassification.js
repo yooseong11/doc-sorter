@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { classifyDocuments } from '../lib/state/runDocuments'
+import { CLASSIFICATION_PHASE } from '../lib/state/classificationPhases'
 
 export function useClassification({ items, dispatch, preset, onComplete }) {
   const [busy, setBusy] = useState(false)
@@ -7,7 +8,7 @@ export function useClassification({ items, dispatch, preset, onComplete }) {
   const running = useRef(false)
 
   async function runClassification(id) {
-    if (running.current || items.some((item) => item.classification.phase === 'reading')) return
+    if (running.current || items.some((item) => item.classification.phase === CLASSIFICATION_PHASE.READING)) return
     running.current = true
     setBusy(true)
     try {

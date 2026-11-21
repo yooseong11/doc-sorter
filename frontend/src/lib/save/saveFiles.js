@@ -4,6 +4,7 @@
 import { savePath } from './savePath.js'
 import { takenNames, uniqueName } from './savePlan.js'
 import { appendLog } from './logCsv.js'
+import { SAVE_PHASE } from '../state/savePhases.js'
 
 export function saveError(error) {
   if (error?.name === 'NotAllowedError') return '폴더 권한이 회수되어 쓰지 못했습니다.'
@@ -48,29 +49,29 @@ export async function writeDocument(item, rootHandle) {
 export async function saveAll(items, { rootHandle, onRow, logName, date, log = appendLog, write = writeDocument }) {
   for (const item of items) {
     // 이미 저장된 파일은 건드리지 않는다. 재시도 목록에 섞여 들어와도 마찬가지다. (ADR 0011)
-    if (item.save.phase === 'saved') continue
-    onRow(item.source.id, { phase: 'saving', error: null, savedName: item.save.savedName })
+    if (item.save.phase === SAVE_PHASE.SAVED) continue
+    onRow(item.source.id, { phase: SAVE_PHASE.SAVING, error: null, savedName: item.save.savedName })
 
-    const skipWrite = item.save.phase === 'log-failed'
+    const skipWrite = item.save.phase === SAVE_PHASE.LOG_FAILED
     const result = skipWrite
       ? { ok: true, savedName: item.save.savedName, renamed: item.save.renamed, target: item.save.target }
       : await write(item, rootHandle)
 
     if (!result.ok) {
-      onRow(item.source.id, { phase: 'write-failed', error: result.error })
+      onRow(item.source.id, { phase: SAVE_PHASE.WRITE_FAILED, error: result.error })
       continue
     }
 
     const { savedName, renamed, target } = result
-    const saved = { ...item, save: { ...item.save, savedName, renamed, target, phase: 'saved', error: null } }
+    const saved = { ...item, save: { ...item.save, savedName, renamed, target, phase: SAVE_PHASE.SAVED, error: null } }
 
     try {
       await log(rootHandle, logName, [saved], date)
     } catch {
-      onRow(item.source.id, { savedName, renamed, target, phase: 'log-failed', error: LOG_ERROR })
+      onRow(item.source.id, { savedName, renamed, target, phase: SAVE_PHASE.LOG_FAILED, error: LOG_ERROR })
       continue
     }
 
-    onRow(item.source.id, { savedName, renamed, target, phase: 'saved', error: null })
+    onRow(item.source.id, { savedName, renamed, target, phase: SAVE_PHASE.SAVED, error: null })
   }
 }

@@ -4,6 +4,7 @@ import FileIcon from '../common/FileIcon'
 import FileMeta from '../common/FileMeta'
 import CategorySelect from './CategorySelect'
 import { UNCLASSIFIED } from '../../../shared/categories.js'
+import { CLASSIFICATION_PHASE } from '../../lib/state/classificationPhases'
 import './ResultRow.css'
 
 // 확인 화면의 한 줄. 파일명 · 카테고리 드롭다운 · 근거 한 줄. (ADR 0004)
@@ -88,7 +89,7 @@ function ResultRow({ item, preset, onChangeCategory, onRetry, disabled }) {
         </button>
 
         <div className="result-row__side">
-          {['failed', 'reading', 'classifying'].includes(status) && (
+          {['failed', CLASSIFICATION_PHASE.READING, CLASSIFICATION_PHASE.CLASSIFYING].includes(status) && (
             <StatusBadge status={status} title={error} />
           )}
 

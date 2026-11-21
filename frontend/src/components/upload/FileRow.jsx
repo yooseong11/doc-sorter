@@ -1,12 +1,13 @@
 import StatusBadge from '../common/StatusBadge'
 import FileIcon from '../common/FileIcon'
 import FileMeta from '../common/FileMeta'
+import { CLASSIFICATION_PHASE } from '../../lib/state/classificationPhases'
 import './FileRow.css'
 
 function FileRow({ item, onRemove, disabled }) {
   const { id, name, size } = item.source
   const { phase, error, readable } = item.classification
-  const status = phase === 'ready' ? 'waiting' : phase.endsWith('-failed') ? 'failed' : phase
+  const status = phase === CLASSIFICATION_PHASE.READY ? 'waiting' : phase.endsWith('-failed') ? 'failed' : phase
 
   return (
     <li className="file-row">

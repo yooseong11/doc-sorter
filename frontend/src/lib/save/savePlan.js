@@ -3,6 +3,7 @@
 // 계획 단계에서는 폴더를 만들지 않는다. 읽기만 하고, 폴더 생성은 쓰기 직전에 한다.
 
 import { savePath, withSuffix } from './savePath.js'
+import { SAVE_PHASE } from '../state/savePhases.js'
 
 // 폴더 안에 이미 있는 파일 이름. 하위 폴더는 이름 충돌 대상이 아니다.
 export async function takenNames(directoryHandle) {
@@ -34,7 +35,7 @@ async function namesIn(rootHandle, category) {
 
 // 파일이 이미 디스크에 쓰였는지. 저장 완료거나, 파일은 썼지만 기록만 실패한 경우 둘 다 해당한다. (ADR 0013)
 function alreadyWritten(save) {
-  return save.phase === 'saved' || save.phase === 'log-failed'
+  return save.phase === SAVE_PHASE.SAVED || save.phase === SAVE_PHASE.LOG_FAILED
 }
 
 // 한 배치 안에서 같은 이름이 둘이면 서로도 충돌이다. 정한 이름을 계속 넣어 두고 순차로 고른다.
@@ -61,7 +62,7 @@ export async function planSaves(items, rootHandle) {
       ...item,
       save: {
         ...item.save,
-        phase: 'planned',
+        phase: SAVE_PHASE.PLANNED,
         savedName,
         renamed,
         target: savePath(category, savedName),

@@ -1,4 +1,6 @@
 import { UNCLASSIFIED } from '../../../shared/categories.js'
+import { CLASSIFICATION_PHASE } from './classificationPhases.js'
+import { SAVE_PHASE } from './savePhases.js'
 
 export function createDocument(file, id) {
   return {
@@ -9,7 +11,7 @@ export function createDocument(file, id) {
       size: file.size,
     },
     classification: {
-      phase: 'reading',
+      phase: CLASSIFICATION_PHASE.READING,
       error: null,
       readable: true,
       text: '',
@@ -17,7 +19,7 @@ export function createDocument(file, id) {
       quote: '',
     },
     save: {
-      phase: 'waiting',
+      phase: SAVE_PHASE.WAITING,
       error: null,
       savedName: null,
       target: null,
@@ -58,7 +60,7 @@ export function documentsReducer(items, action) {
             classification: {
               ...item.classification,
               categoryId: action.categoryId,
-              phase: 'classified',
+              phase: CLASSIFICATION_PHASE.CLASSIFIED,
               error: null,
             },
           }
