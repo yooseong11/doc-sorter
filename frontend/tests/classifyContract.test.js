@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { buildClassificationInput, normalizeClassification, quoteInText, MAX_TEXT_CHARS, MAX_QUOTE_CHARS } from '../shared/classifyContract.js'
-import { requestClassification } from '../src/lib/classify/classify.js'
+import { requestClassification } from '../src/api/classify.js'
 import { createDocument, documentsReducer } from '../src/lib/state/documentsReducer.js'
 import { categoryPreset } from '../shared/categories.js'
 import { withIds } from '../src/lib/state/categoryStore.js'

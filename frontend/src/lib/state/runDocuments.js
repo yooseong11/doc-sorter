@@ -1,7 +1,7 @@
 import { extractText } from '../read/extractText.js'
 import { buildClassificationInput } from '../../../shared/classifyContract.js'
 import { UNCLASSIFIED } from '../../../shared/categories.js'
-import { requestClassification } from '../classify/classify.js'
+import { requestClassification } from '../../api/classify.js'
 import { CLASSIFICATION_PHASE } from './classificationPhases.js'
 
 function withClassification(item, patch) {

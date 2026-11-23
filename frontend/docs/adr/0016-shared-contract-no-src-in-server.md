@@ -1,7 +1,7 @@
 # 0016. 브라우저 계약과 Python 백엔드를 분리한다
 
 ## 결정
-프론트의 분류 스키마·상수·정규화는 frontend/shared/에 두고, 브라우저 요청은 src/에서 /api/classify로 보낸다. 서버 처리는 backend/의 FastAPI가 담당하며 프론트 JS를 import하지 않는다. 개발 중에는 Vite 프록시로 연결한다.
+프론트의 분류 스키마·상수·정규화는 frontend/shared/에 두고, 브라우저 통신 코드는 src/api/에 두고 /api/classify로 요청한다. 서버 처리는 backend/의 FastAPI가 담당하며 프론트 JS를 import하지 않는다. 개발 중에는 Vite 프록시로 연결한다.
 
 ## 이유
 브라우저와 서버의 실행 환경 및 의존성을 분리한다. 현재 백엔드는 고정 응답만 반환하며, 실제 AI와 서버 검증은 추후 구현한다. 브라우저의 응답 검증과 이름→id 변환은 유지한다.

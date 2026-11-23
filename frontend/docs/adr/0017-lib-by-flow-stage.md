@@ -1,7 +1,7 @@
 # 0017. lib을 흐름 단계로 나눈다
 
 ## 결정
-`src/lib/` 평면 구조를 `read/`·`classify/`·`save/`·`state/`로 나누고 파일 이름은 `saveFolder.js`처럼 역할을 드러내며, `src/components/`는 나누지 않는다.
+`src/lib/` 평면 구조를 `read/`·`save/`·`state/`로 나누고, 브라우저 통신은 `src/api/`에 두며(0016), 파일 이름은 `saveFolder.js`처럼 역할을 드러내며, `src/components/`는 나누지 않는다.
 
 ## 이유
 평면 11개라 상태와 흐름 파일이 이름으로 구분되지 않았고, 스토리 맵의 흐름을 폴더 축으로 쓰면 새 파일의 위치가 분명해진다.
