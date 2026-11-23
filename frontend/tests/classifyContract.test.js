@@ -7,8 +7,6 @@ import { categoryPreset } from '../shared/categories.js'
 import { withIds } from '../src/lib/state/categoryStore.js'
 import { classifyDocuments, prepareDocument } from '../src/lib/state/runDocuments.js'
 import { extractText } from '../src/lib/read/extractText.js'
-import { createClassifier, readAIConfig } from '../server/classifier.js'
-import { createHandler } from '../api/classify.js'
 
 // 요청에 실어 보내는 카테고리. 기본값과 다른 목록으로 두어 하드코딩을 잡는다. (ADR 0019)
 const categories = [{ name: '계약서', hint: '용역·근로 계약, NDA' }, { name: '세금 신고', hint: '부가세, 원천세' }]
@@ -117,85 +115,4 @@ test('클라이언트는 자체 API를 호출하고 HTTP 오류를 실패로 처
   // 서버는 이름으로 답하지만 클라이언트는 받은 즉시 프리셋의 id로 바꾼다. (ADR 0022)
   assert.equal(result.categoryId, idPreset.categories.find((category) => category.name === '계약서').id)
   await assert.rejects(requestClassification(input, idPreset, async () => ({ ok: false })))
-})
-test('환경 변수로 제공자 주소·모델·키를 바꾸며 자동 재시도하지 않는다', async () => {
-  let options, payload
-  class Client {
-    constructor(value) {
-      options = value
-      this.chat = { completions: { create: async (input) => {
-        payload = input
-        return { choices: [{ finish_reason: 'stop', message: { content: '{"category":"계약서"}' } }] }
-      } } }
-    }
-  }
-  const classify = createClassifier({ AI_PROVIDER: 'openai-compatible', AI_BASE_URL: 'https://example.com/v1', AI_MODEL: 'custom', AI_API_KEY: 'test-key' }, Client)
-  assert.equal((await classify({ name: 'a', text: '내용', categories })).category, '계약서')
-  // 스키마와 프롬프트가 이번 요청의 카테고리를 따른다. 기본 목록에 없는 이름이다. (ADR 0019)
-  assert.deepEqual(payload.response_format.json_schema.schema.properties.category.enum, ['계약서', '세금 신고', '미분류'])
-  assert.match(payload.messages[0].content, /세금 신고/)
-  // 카테고리를 user 메시지에 또 싣지 않는다.
-  assert.deepEqual(Object.keys(JSON.parse(payload.messages[1].content)), ['name', 'text'])
-  assert.equal(options.baseURL, 'https://example.com/v1')
-  assert.equal(options.maxRetries, 0)
-  assert.equal(payload.model, 'custom')
-  assert.equal(payload.response_format.json_schema.strict, true)
-  // 근거 인용문도 같이 받는다. (ADR 0015)
-  assert.deepEqual(payload.response_format.json_schema.schema.required, ['category', 'quote'])
-  assert.throws(() => readAIConfig({ AI_PROVIDER: 'unknown' }))
-  assert.throws(() => readAIConfig({}))
-})
-test('DeepSeek은 기본 주소를 쓰고 추론 모드를 끈 채로 json_object를 요청한다', async () => {
-  let options, payload
-  class Client {
-    constructor(value) {
-      options = value
-      this.chat = { completions: { create: async (input) => {
-        payload = input
-        return { choices: [{ finish_reason: 'stop', message: { content: '{"category":"근태","quote":"연차 사용 신청서"}' } }] }
-      } } }
-    }
-  }
-  const classify = createClassifier({ AI_PROVIDER: 'deepseek', AI_MODEL: 'deepseek-flash', AI_API_KEY: 'test-key' }, Client)
-  // 인용문 확인은 보낸 원문과 대조한다. (ADR 0018)
-  const classified = await classify({ name: 'a', text: '연차 사용 신청서를 제출합니다.' })
-  assert.equal(classified.category, '근태')
-  assert.equal(classified.quote, '연차 사용 신청서')
-  // 인용문 몫까지 출력 한도를 잡아 둔다. (ADR 0015)
-  assert.ok(payload.max_tokens >= 400)
-  assert.equal(options.baseURL, 'https://api.deepseek.com/v1')
-  // DeepSeek은 strict json_schema를 400으로 거부한다.
-  assert.equal(payload.response_format.type, 'json_object')
-  // 추론 모드가 켜지면 추론 토큰만 수백 개가 나가고 출력이 잘린다.
-  assert.deepEqual(payload.thinking, { type: 'disabled' })
-  assert.ok(Number.isInteger(payload.max_tokens))
-  // json_object는 "json"이라는 단어와 형식 예시를 요구한다.
-  assert.match(payload.messages[0].content, /json/)
-  assert.match(payload.messages[0].content, /quote/)
-})
-test('API는 메서드·입력 검증을 먼저 하며 내부 오류를 노출하지 않는다', async () => {
-  let calls = 0
-  const handler = createHandler(() => async () => { calls++; throw new Error('secret-api-key') })
-  async function invoke(method, body) {
-    const res = { setHeader() {}, status(code) { this.code = code; return this }, json(value) { this.body = value; return this } }
-    await handler({ method, body }, res)
-    return res
-  }
-  assert.equal((await invoke('GET')).code, 405)
-  assert.equal((await invoke('POST', '{')).code, 400)
-  assert.equal((await invoke('POST', { name: 'a', text: 'x'.repeat(6001), categories })).code, 400)
-  assert.equal((await invoke('POST', { name: 'a', text: 'ok', categories, file: 'raw' })).code, 400)
-  // 카테고리를 안 실으면 거절한다. 기본값으로 대신 분류하지 않는다. (ADR 0019)
-  assert.equal((await invoke('POST', { name: 'a', text: 'ok' })).code, 400)
-  assert.equal(calls, 0)
-  const result = await invoke('POST', { name: 'a', text: 'ok', categories })
-  assert.equal(result.code, 502)
-  assert.ok(!JSON.stringify(result.body).includes('secret-api-key'))
-})
-test('API 응답에는 카테고리와 근거 인용문만 담긴다', async () => {
-  const handler = createHandler(() => async () => ({ category: '계약서', quote: '갑과 을은 다음과 같이 계약한다', internal: 'secret' }))
-  const res = { setHeader() {}, status(code) { this.code = code; return this }, json(value) { this.body = value; return this } }
-  await handler({ method: 'POST', body: { name: 'a.pdf', text: '내용', categories } }, res)
-  assert.equal(res.code, 200)
-  assert.deepEqual(res.body, { category: '계약서', quote: '갑과 을은 다음과 같이 계약한다' })
 })

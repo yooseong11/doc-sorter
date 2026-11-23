@@ -1,7 +1,11 @@
 import react from '@vitejs/plugin-react'
-import { defineConfig, loadEnv } from 'vite'
-import { devApi } from './server/devApi.js'
+import { defineConfig } from 'vite'
 
-export default defineConfig(({ mode }) => ({
-  plugins: [react(), devApi({ ...loadEnv(mode, process.cwd(), ''), ...process.env })],
-}))
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    proxy: {
+      '/api': 'http://127.0.0.1:8000',
+    },
+  },
+})

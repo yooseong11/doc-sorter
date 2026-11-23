@@ -9,11 +9,11 @@
 | 영역 | 기술 |
 |---|---|
 | **Frontend** | React, Vite |
-| **Backend** | Vercel Functions, Node.js |
-| **AI** | OpenAI API, DeepSeek |
+| **Backend** | Python, FastAPI (`../backend`) |
+| **AI** | 연결 예정 · 현재 고정 미분류 응답 |
 | **Storage** | File System API, idb-keyval (IndexedDB) |
 | **Testing** | Node --test |
-| **Deployment** | Vercel |
+| **Deployment** | 프론트 Vercel · Python API 배포 연결 미설정 |
 
 ## 문제를 어떻게 정의했나요: 스토리 맵핑
 
@@ -60,6 +60,8 @@ ADR스킬과 더불어 `AGENTS.md`에 대화를 시작하면 무조건 `STORY_MA
 - [0024 화면은 pages/, 공통 레이아웃은 layouts/에 둔다](./docs/adr/0024-pages-and-layout.md)
 
 ## 시작
+
+백엔드는 [실행 안내](../backend/readme.md)에 따라 별도 실행합니다. 개발 중 `/api` 요청은 Vite가 `http://127.0.0.1:8000`으로 전달합니다.
 
 ```bash
 npm install
