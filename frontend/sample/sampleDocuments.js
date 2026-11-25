@@ -3,6 +3,8 @@ import document1Url from './documents/KakaoTalk_20260918_1432.pdf?url&no-inline'
 import document2Url from './documents/출석인정신청서.hwpx?url&no-inline'
 import document3Url from './documents/로고디자인_용역계약서.pdf?url&no-inline'
 import document4Url from './documents/복지포인트_도서구입_신청서.docx?url&no-inline'
+import document5Url from './documents/SCAN_20261201_0915.png?url&no-inline'
+import document6Url from './documents/법인카드_영수증_스캔.pdf?url&no-inline'
 import { categoryPreset } from '../shared/categories.js'
 
 // 샘플은 기본 카테고리에 맞춰 만든 고정 데이터다.
@@ -34,6 +36,17 @@ const samples = [
     fileName: '복지포인트_도서구입_신청서.docx',
     url: document4Url,
     expectedCategory: '복지 신청',
+  },
+  // 텍스트 레이어가 없는 스캔 이미지. 로컬 OCR 경로를 확인한다. (ADR 0007)
+  {
+    fileName: 'SCAN_20261201_0915.png',
+    url: document5Url,
+    expectedCategory: '근태',
+  },
+  {
+    fileName: '법인카드_영수증_스캔.pdf',
+    url: document6Url,
+    expectedCategory: '비용 증빙',
   },
 ]
 

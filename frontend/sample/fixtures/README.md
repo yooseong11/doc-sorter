@@ -77,3 +77,19 @@ python3 -m pip install --user reportlab python-docx
 - 내용을 바꾸고 싶으면 `make_samples.py`의 문구만 고쳐 다시 실행하면 같은 이름으로 덮어 쓴다.
 - 7번 깨진 pdf는 reportlab이 아니라 일반 텍스트 파일을 확장자만 `.pdf`로 저장한 것이다.
 - 8번 hwpx는 R1에서 읽지 않을 것이므로 최소 구조(빈 압축 파일)로만 두었다.
+
+## OCR 경로 샘플 (R4)
+
+함정 문서와 별개로, 텍스트 레이어가 없어 로컬 OCR(`/api/ocr`)을 거치는 문서 2개를 둔다. 둘 다 `documents/`에도 복사되어 샘플 버튼으로 불러온다.
+
+| 파일 | 형식 | 기대 카테고리 | 확인 포인트 |
+|---|---|---|---|
+| SCAN_20261201_0915.png | png | 근태 | 스캐너 기본 파일명이라 힌트가 없다. 약 1.2° 기울어진 회색조 스캔에서 OCR 텍스트만으로 연차 휴가를 맞혀야 한다 |
+| 법인카드_영수증_스캔.pdf | pdf (이미지 2쪽) | 비용 증빙 | 텍스트 레이어가 비어 있어 모든 페이지가 `ocr`로 처리되어야 한다 |
+
+다시 만들기 (Pillow가 설치된 백엔드 가상환경 사용):
+
+```bash
+cd frontend/sample/fixtures
+../../../backend/.venv/bin/python make_image_samples.py
+```
