@@ -3,7 +3,7 @@ import { groupItems } from '../groupOrder'
 import { logFileName } from '../lib/save/savePath'
 import { planSaves } from '../lib/save/savePlan'
 import { saveAll } from '../lib/save/saveFiles'
-import { SAVE_PHASE } from '../lib/state/savePhases'
+import { SAVE_FLOW_PHASE, SAVE_PHASE } from '../lib/state/savePhases'
 import {
   ensurePermission,
   folderLabel,
@@ -12,8 +12,17 @@ import {
   rememberDirectory,
 } from '../lib/save/saveFolder'
 
+function describeCount({ phase, total, folderCount, savedCount, failedCount }) {
+  if (phase === SAVE_FLOW_PHASE.IDLE) return `${total}개를 ${folderCount}개 폴더에 나눠 넣습니다`
+  if (phase === SAVE_FLOW_PHASE.SAVING) return '저장하는 중입니다. 창을 닫지 마세요'
+  if (failedCount > 0) return `${savedCount}개 저장됨 · ${failedCount}개 실패`
+  return `${savedCount}개를 모두 저장했습니다`
+}
+
 export function useSaveFlow({ items, dispatch, preset, onSavingChange }) {
-  const [phase, setPhase] = useState(() => items.some((item) => item.save.phase !== SAVE_PHASE.WAITING) ? 'done' : 'idle')
+  const [phase, setPhase] = useState(() =>
+    items.some((item) => item.save.phase !== SAVE_PHASE.WAITING) ? SAVE_FLOW_PHASE.DONE : SAVE_FLOW_PHASE.IDLE,
+  )
   const [notice, setNotice] = useState('')
   const [folder, setFolder] = useState('')
   const rootRef = useRef(null)
@@ -21,18 +30,21 @@ export function useSaveFlow({ items, dispatch, preset, onSavingChange }) {
   const logName = logFileName()
 
   const savedCount = items.filter((item) => item.save.phase === SAVE_PHASE.SAVED).length
-  const failedCount = items.filter((item) => item.save.phase.endsWith('-failed')).length
+  const failedItems = items.filter(
+    (item) => item.save.phase === SAVE_PHASE.WRITE_FAILED || item.save.phase === SAVE_PHASE.LOG_FAILED,
+  )
+  const failedCount = failedItems.length
   const folders = groupItems(items, preset).map((group) => ({
     name: group.name,
     count: group.rows.length,
   }))
-  const countText = phase === 'idle'
-    ? `${items.length}개를 ${folders.length}개 폴더에 나눠 넣습니다`
-    : phase === SAVE_PHASE.SAVING
-      ? '저장하는 중입니다. 창을 닫지 마세요'
-      : failedCount > 0
-        ? `${savedCount}개 저장됨 · ${failedCount}개 실패`
-        : `${savedCount}개를 모두 저장했습니다`
+  const countText = describeCount({
+    phase,
+    total: items.length,
+    folderCount: folders.length,
+    savedCount,
+    failedCount,
+  })
 
   // StrictMode는 effect를 두 번 실행한다. 되살리는 것도 여기서 해야 한다.
   useEffect(() => {
@@ -81,7 +93,7 @@ export function useSaveFlow({ items, dispatch, preset, onSavingChange }) {
       return
     }
     setNotice('')
-    setPhase(SAVE_PHASE.SAVING)
+    setPhase(SAVE_FLOW_PHASE.SAVING)
     onSavingChange(true)
 
     const onRow = (id, patch) => {
@@ -100,16 +112,13 @@ export function useSaveFlow({ items, dispatch, preset, onSavingChange }) {
       await saveAll(planned, { rootHandle, onRow, logName })
     } finally {
       onSavingChange(false)
-      if (alive.current) setPhase('done')
+      if (alive.current) setPhase(SAVE_FLOW_PHASE.DONE)
     }
   }
 
   // 재시도는 실패한 파일만. 저장된 파일은 그대로 둔다. (ADR 0011)
   async function retryFailed(id) {
-    const failed = items.filter(
-      (item) => item.save.phase.endsWith('-failed') && (!id || item.source.id === id),
-    )
-    await save(failed)
+    await save(failedItems.filter((item) => !id || item.source.id === id))
   }
 
   return {

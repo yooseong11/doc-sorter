@@ -7,7 +7,7 @@ import SavePlanTree from '../components/save/SavePlanTree'
 import SaveList from '../components/save/SaveList'
 import SaveActionBar from '../components/save/SaveActionBar'
 import { useSaveFlow } from '../hooks/useSaveFlow'
-import { SAVE_PHASE } from '../lib/state/savePhases'
+import { SAVE_FLOW_PHASE } from '../lib/state/savePhases'
 import './SavePage.css'
 
 // S3 저장 화면 — 최상위 폴더를 고르고 카테고리 폴더에 넣은 뒤 기록표를 남긴다.
@@ -43,7 +43,7 @@ function SavePage({ items, dispatch, preset, onBack, onRestart, onSavingChange }
       >
         <StatGroup>
           <Stat value={items.length} label="전체" />
-          {(phase === SAVE_PHASE.SAVING || phase === 'done') && (
+          {(phase === SAVE_FLOW_PHASE.SAVING || phase === SAVE_FLOW_PHASE.DONE) && (
             <Stat value={savedCount} label="저장됨" tone="ok" />
           )}
           {failedCount > 0 && (
@@ -54,13 +54,13 @@ function SavePage({ items, dispatch, preset, onBack, onRestart, onSavingChange }
 
       <SaveFolderPicker
         folder={folder}
-        saving={phase === SAVE_PHASE.SAVING}
+        saving={phase === SAVE_FLOW_PHASE.SAVING}
         onPick={pickFolder}
       />
 
       {notice && <InlineNotice>{notice}</InlineNotice>}
 
-      {phase === 'idle' ? (
+      {phase === SAVE_FLOW_PHASE.IDLE ? (
         <SavePlanTree folders={folders} logName={logName} />
       ) : (
         <SaveList items={items} onRetry={retryFailed} />

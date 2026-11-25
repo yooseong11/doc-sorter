@@ -1,6 +1,6 @@
 import ActionBar from '../common/ActionBar'
 import Button from '../common/Button'
-import { SAVE_PHASE } from '../../lib/state/savePhases'
+import { SAVE_FLOW_PHASE } from '../../lib/state/savePhases'
 
 function SaveActionBar({
   phase,
@@ -12,7 +12,7 @@ function SaveActionBar({
   onBack,
   onSave,
 }) {
-  const done = phase === 'done'
+  const done = phase === SAVE_FLOW_PHASE.DONE
 
   return (
     <ActionBar
@@ -31,13 +31,13 @@ function SaveActionBar({
             <Button
               variant="quiet"
               onClick={onBack}
-              disabled={phase === SAVE_PHASE.SAVING}
+              disabled={phase === SAVE_FLOW_PHASE.SAVING}
             >
               확인 화면으로
             </Button>
             <Button
               onClick={onSave}
-              disabled={phase === SAVE_PHASE.SAVING || !canSave}
+              disabled={phase === SAVE_FLOW_PHASE.SAVING || !canSave}
             >
               저장 시작
             </Button>

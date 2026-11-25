@@ -11,7 +11,7 @@ function SaveRow({ item, onRetry }) {
   const { id, name, size } = item.source
   const { category } = item.classification
   const { phase, error, savedName, target, renamed } = item.save
-  const failed = phase.endsWith('-failed')
+  const failed = phase === SAVE_PHASE.WRITE_FAILED || phase === SAVE_PHASE.LOG_FAILED
   // 계획만 세운 상태(planned)는 아직 대기 중인 것으로 보여준다.
   const status = phase === SAVE_PHASE.PLANNED ? 'waiting' : failed ? 'failed' : phase
 

@@ -22,19 +22,15 @@ export async function writeDocument(item, rootHandle) {
     const directory = await rootHandle.getDirectoryHandle(category, { create: true })
     const { savedName, renamed } = uniqueName(await takenNames(directory), item.source.name)
     const handle = await directory.getFileHandle(savedName, { create: true })
+    const writable = await handle.createWritable()
 
     try {
-      const writable = await handle.createWritable()
-      try {
-        await writable.write(item.source.file)
-        await writable.close()
-      } catch (error) {
-        // 쓰다 만 파일을 남기지 않는다. 이미 끝난 다른 파일은 건드리지 않는다. (ADR 0011)
-        await writable.abort().catch(() => {})
-        throw error
-      }
+      await writable.write(item.source.file)
+      await writable.close()
     } catch (error) {
-      return { ok: false, error: saveError(error) }
+      // 쓰다 만 파일을 남기지 않는다. 이미 끝난 다른 파일은 건드리지 않는다. (ADR 0011)
+      await writable.abort().catch(() => {})
+      throw error
     }
 
     return { ok: true, savedName, renamed, target: savePath(category, savedName) }
