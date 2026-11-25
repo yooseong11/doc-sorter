@@ -1,4 +1,5 @@
 import os
+from app.config import ConfigError
 from app.providers.base import BaseProvider
 
 
@@ -10,4 +11,4 @@ def create_provider() -> BaseProvider:
     if provider_name == 'openai':
         from app.providers.openai_provider import OpenAIProvider
         return OpenAIProvider()
-    raise RuntimeError(f'지원하지 않는 Provider 설정: {provider_name}')
+    raise ConfigError(f'지원하지 않는 Provider 설정: {provider_name}')

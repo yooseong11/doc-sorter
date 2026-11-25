@@ -1,6 +1,6 @@
-"""OCR JSON 계약. 직접 추출 좌표는 회전 전 PDF 페이지의 point 단위다."""
+"""API JSON 계약. 직접 추출 좌표는 회전 전 PDF 페이지의 point 단위다."""
 from typing import Literal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class BoundingBox(BaseModel):
@@ -47,3 +47,36 @@ class OcrResponse(BaseModel):
     text: str
     result: DocumentResult
     files: dict[str, str]
+
+
+class Category(BaseModel):
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
+    name: str = Field(min_length=1, max_length=20)
+    hint: str = Field(max_length=60)
+
+    @field_validator('name')
+    @classmethod
+    def not_unclassified(cls, value):
+        if value == '미분류':
+            raise ValueError('미분류는 예약된 이름입니다.')
+        return value
+
+
+class ClassificationInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    name: str = Field(min_length=1, max_length=255)
+    text: str = Field(min_length=1, max_length=3000)
+    categories: list[Category] = Field(min_length=1, max_length=8)
+
+    @field_validator('categories')
+    @classmethod
+    def unique_names(cls, values):
+        if len({value.name for value in values}) != len(values):
+            raise ValueError('카테고리 이름이 겹칩니다.')
+        return values
+
+
+class ClassificationResult(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    category: str
+    quote: str

@@ -12,18 +12,21 @@ class OllamaProvider(BaseProvider):
         super().__init__('ollama', required_env('OLLAMA_MODEL'))
         self._base_url = os.getenv('OLLAMA_BASE_URL','http://127.0.0.1:11434').rstrip('/')
 
-    def _generate(self, message: str) -> str:
+    def _generate(self, message: str, schema: dict | None) -> str:
+        body = {'model': self._model, 'messages': [{'role': 'user', 'content': message}], 'stream': False}
+        if schema is not None:
+            body['format'] = schema
         try:
             response = httpx.post(
                 f'{self._base_url}/api/chat',
-                json={'model': self._model, 'messages':[{'role':'user','content': message}], 'stream':False},
+                json=body,
                 timeout=60.0,
             )
             response.raise_for_status()
         except httpx.TimeoutException as exc:
             raise ProviderTimeoutError() from exc
         except httpx.HTTPStatusError as exc:
-            raise ProviderUpstreamError() from exc
+            raise ProviderUpstreamError(f'Ollama HTTP {exc.response.status_code}') from exc
         except httpx.RequestError as exc:
             raise ProviderConnectionError() from exc
         try:

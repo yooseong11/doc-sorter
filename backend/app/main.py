@@ -1,11 +1,14 @@
-from fastapi import FastAPI, Request, UploadFile
+from fastapi import FastAPI, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
-from .config import OcrSettings
+from .config import ConfigError, OcrSettings
 from .ocr_errors import OcrError
-from .schemas import OcrResponse
+from .schemas import OcrResponse, ClassificationInput, ClassificationResult
 from .services.document_service import process_document, safe_filename
+
+from .services.classification_service import classify_document
+from .providers.errors import AIProviderError, ProviderTimeoutError
 
 app = FastAPI()
 
@@ -21,9 +24,16 @@ def check_health():
     return {'status': 'ok'}
 
 
-@app.post('/api/classify')
-def classify():
-    return {'category': '미분류', 'quote': ''}
+@app.post('/api/classify', response_model=ClassificationResult)
+def classify(body: ClassificationInput):
+    try:
+        return classify_document(body)
+    except ProviderTimeoutError as exc:
+        raise HTTPException(504, detail={'message': 'OpenAI 응답 시간이 초과되었습니다. 다시 시도해 주세요.'}) from exc
+    except AIProviderError as exc:
+        raise HTTPException(502, detail={'message': 'OpenAI 분류에 실패했습니다. 연결 또는 모델 설정을 확인해 주세요.'}) from exc
+    except ConfigError as exc:
+        raise HTTPException(503, detail={'message': '백엔드의 OPENAI_API_KEY와 OPENAI_MODEL 설정을 확인해 주세요.'}) from exc
 
 
 @app.post('/api/ocr', response_model=OcrResponse)

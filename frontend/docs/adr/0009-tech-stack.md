@@ -1,7 +1,7 @@
 # 0009. 기술 스택
 
 ## 결정
-React + JS, Vite, Valibot, mammoth, jszip, idb-keyval, node --test를 사용한다. 백엔드는 별도 backend/의 Python + FastAPI로 전환하며, 분류는 AI 연결 없이 고정 응답을 반환하고 OCR은 pytesseract·Pillow·PyMuPDF·OpenCV headless·numpy로 처리한다. 제공자 교체 구조는 추후 구현한다.
+React + JS, Vite, Valibot, mammoth, jszip, idb-keyval, node --test를 사용한다. 백엔드는 별도 backend/의 Python + FastAPI로 전환하며, 분류는 OpenAI Responses API로 카테고리와 원문 근거 인용문을 반환하고 OCR은 pytesseract·Pillow·PyMuPDF·OpenCV headless·numpy로 처리한다. 분류 API는 OpenAI만 사용한다.
 
 ## 이유
 PDF·이미지는 로컬 OCR로 처리하고 DOCX·HWPX는 브라우저에서 추출한다(0007·0008). Valibot으로 외부 응답을 검증하며 브라우저는 `/api/classify`·`/api/ocr`를 호출하고 Python 서버는 backend/로 분리한다(0016).

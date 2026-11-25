@@ -27,7 +27,20 @@ python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 
 프론트는 기존 Vite `/api` 프록시로 연결한다. 개발 중 다른 로컬 포트가 필요하면 프론트 실행 시 `DOC_SORTER_API_TARGET=http://127.0.0.1:8001 npm run dev`처럼 지정할 수 있다. PDF와 이미지 처리는 이 로컬 서버가 필요하다.
 외부 서버에 원본을 보내지 않도록 서버를 사용자 PC의 `127.0.0.1`에서 실행한다.
-`/api/classify`는 기존 고정 미분류 응답이며 AI 분류 연결은 이번 OCR 구현과 별개다.
+`/api/classify`는 OpenAI로 분류하고 원문 근거 인용문을 반환한다. Ollama 선택 설정은 사용하지 않는다.
+
+### OpenAI 분류 설정
+
+`backend/.env.example`을 참고해 `backend/.env`에 `OPENAI_API_KEY`와 `OPENAI_MODEL`을 설정하고 서버를 재시작한다.
+모델은 Responses API와 Structured Outputs를 지원해야 한다. API 키는 프론트에 넣지 않는다.
+`pip install -r requirements.txt`로 OpenAI SDK도 설치한다.
+
+요청 JSON은 `{name, text, categories: [{name, hint}]}`이며 text는 최대 3000자다.
+응답은 `{category, quote}`로, quote는 요약이 아닌 120자 이내의 원문 인용이다.
+목록 밖 카테고리는 미분류로 보정하고 원문에 없는 인용문은 비운다.
+OpenAI 요청은 35초 제한·자동 재시도 없음이며 설정 누락 503, AI 오류 502, 시간 초과 504를 반환한다.
+실패한 문서는 기존 화면에서 재시도할 수 있다.
+호출은 [OpenAI Responses API](https://developers.openai.com/api/reference/resources/responses/methods/create)의 JSON Schema 출력을 사용한다.
 
 ```sh
 curl -F 'file=@/absolute/path/document.pdf' http://127.0.0.1:8000/api/ocr

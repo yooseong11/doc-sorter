@@ -9,3 +9,4 @@ PyMuPDF==1.28.2
 opencv-python-headless==4.14.0.94
 numpy==2.5.5
 python-multipart==0.0.34
+openai==2.54.0

@@ -8,10 +8,14 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path=Path(__file__).resolve().parents[1] / '.env')
 
 
+class ConfigError(RuntimeError):
+    """backend/.env 설정이 없거나 잘못됐을 때만 쓴다. 코드 버그의 RuntimeError와 구분한다."""
+
+
 def required_env(name: str) -> str:
     value = os.getenv(name, '').strip()
     if not value or value.startswith('<'):
-        raise RuntimeError(f'설정이 필요합니다: {name}')
+        raise ConfigError(f'설정이 필요합니다: {name}')
     return value
 
 
