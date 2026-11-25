@@ -3,3 +3,9 @@ httpx==0.28.1
 pydantic==2.14.4
 python-dotenv==1.2.4
 uvicorn==0.54.0
+pytesseract==0.3.13
+Pillow==12.3.0
+PyMuPDF==1.28.2
+opencv-python-headless==4.14.0.94
+numpy==2.5.5
+python-multipart==0.0.34

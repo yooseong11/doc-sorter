@@ -35,3 +35,5 @@ Claude outputs/
 
 .venv
 __pycache__
+# Local OCR text and coordinate results
+backend/outputs/
