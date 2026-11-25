@@ -60,7 +60,8 @@ curl -F 'file=@/absolute/path/document.pdf' http://127.0.0.1:8000/api/ocr
 
 ### 처리 흐름과 핵심 함수
 
-서비스는 `app/services/`에 모으고, `main.py`는 API 요청·응답을 담당한다.
+서비스는 `app/services/`에 모으고, API 요청·응답은 `app/routes/`에서 담당한다.
+`main.py`는 앱 생성, provider 수명 관리, 공통 예외 처리와 라우터 등록을 담당한다.
 `ocr_worker.py`는 격리 프로세스 진입점으로 `app/`에 유지한다.
 
 ```text
@@ -70,6 +71,11 @@ app/
 ├── schemas.py
 ├── ocr_errors.py
 ├── ocr_worker.py
+├── routes/
+│   ├── __init__.py
+│   ├── health.py
+│   ├── classification.py
+│   └── ocr.py
 ├── providers/
 └── services/
     ├── __init__.py

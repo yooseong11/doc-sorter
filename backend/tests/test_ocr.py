@@ -201,7 +201,7 @@ class OcrTests(unittest.TestCase):
         self.assertEqual(list(self.settings.outputs_dir.iterdir()), [])
 
     def test_api_save_utf8_safe_paths_repeated(self):
-        with patch('app.main.OcrSettings', return_value=self.settings), TestClient(create_app(provider=BaseProvider('test', 'test'))) as client:
+        with patch('app.routes.ocr.OcrSettings', return_value=self.settings), TestClient(create_app(provider=BaseProvider('test', 'test'))) as client:
             response = client.post('/api/ocr', files={'file': ('../../문서.pdf', make_pdf(), 'application/pdf')})
             self.assertEqual(response.status_code, 200, response.text)
             data = response.json()

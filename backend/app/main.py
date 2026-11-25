@@ -2,18 +2,14 @@
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException, Request, UploadFile
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from starlette.concurrency import run_in_threadpool
 
-from .config import ConfigError, OcrSettings
+from .config import ConfigError
 from .ocr_errors import OcrError
 from .providers.base import BaseProvider
-from .providers.errors import AIProviderError, ProviderTimeoutError
 from .providers.factory import create_provider
-from .schemas import ClassificationInput, ClassificationResult, OcrResponse
-from .services.classification_service import classify_document
-from .services.document_service import process_document, safe_filename
+from .routes import classification, health, ocr
 
 logger = logging.getLogger(__name__)
 
@@ -41,37 +37,8 @@ def create_app(provider: BaseProvider | None = None) -> FastAPI:
         return JSONResponse(status_code=error.status,
                             content={'detail': {'code': error.code, 'message': error.message}})
 
-    @api.get('/health')
-    def check_health():
-        # 실제 모델 호출이 아닌 설정 확인이다.
-        if selected is None:
-            return {'status': 'ok', 'provider': None, 'model': None}
-        return {'status': 'ok', 'provider': selected.provider_name, 'model': selected.model_name}
-
-    @api.post('/api/classify', response_model=ClassificationResult)
-    def classify(body: ClassificationInput):
-        if selected is None:
-            raise HTTPException(503, detail={'message': '백엔드 .env의 AI_PROVIDER와 모델·API 키 설정을 확인해 주세요.'})
-        try:
-            return classify_document(body, selected)
-        except ProviderTimeoutError as exc:
-            raise HTTPException(504, detail={'message': 'AI 응답 시간이 초과되었습니다. 다시 시도해 주세요.'}) from exc
-        except AIProviderError as exc:
-            raise HTTPException(502, detail={'message': 'AI 분류에 실패했습니다. 연결 또는 모델 설정을 확인해 주세요.'}) from exc
-
-    @api.post('/api/ocr', response_model=OcrResponse)
-    async def ocr(file: UploadFile):
-        """파일 수신만 담당한다. 전처리·OCR·저장은 서비스가 수행한다."""
-        try:
-            settings = OcrSettings()
-            filename = safe_filename(file.filename or '')
-            content = bytearray()
-            while chunk := await file.read(1024 * 1024):
-                content.extend(chunk)
-                if len(content) > settings.max_file_bytes:
-                    raise OcrError('file_too_large', '파일 크기 제한을 초과했습니다.', 413)
-            return await run_in_threadpool(process_document, bytes(content), filename, settings)
-        finally:
-            await file.close()
+    api.include_router(health.create_router(selected))
+    api.include_router(classification.create_router(selected))
+    api.include_router(ocr.router)
 
     return api
