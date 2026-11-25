@@ -19,7 +19,7 @@ function UploadEmptyState({ canPick, classifying, onPick, onAddFiles }) {
       </div>
       <h2 className="upload__empty-title">분류할 문서를 선택하세요</h2>
       <p className="upload__empty-hint">
-        파일을 선택하면 여기에 목록이 나옵니다. PDF · DOCX · HWPX
+        파일을 선택하면 여기에 목록이 나옵니다. PDF · DOCX · HWPX · PNG · JPG · JPEG
       </p>
       <div className="upload__empty-actions">
         <Button onClick={onPick} disabled={!canPick}>

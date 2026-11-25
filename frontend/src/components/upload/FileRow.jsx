@@ -6,7 +6,7 @@ import './FileRow.css'
 
 function FileRow({ item, onRemove, disabled }) {
   const { id, name, size } = item.source
-  const { phase, error, readable } = item.classification
+  const { phase, error, readable, ocr } = item.classification
   const status = phase === CLASSIFICATION_PHASE.READY ? 'waiting' : phase.endsWith('-failed') ? 'failed' : phase
 
   return (
@@ -18,6 +18,13 @@ function FileRow({ item, onRemove, disabled }) {
           {name}
         </p>
         <FileMeta name={name} size={size} />
+        {ocr && (
+          <p className="file-row__note" role="status">
+            텍스트·좌표 결과 저장 완료
+            {ocr.reviewWords > 0 && ` · 낮은 신뢰도 ${ocr.reviewWords}개 단어 검토 필요`}
+            {ocr.failedPages.length > 0 && ` · ${ocr.failedPages.join(', ')}페이지 처리 실패`}
+          </p>
+        )}
         {!readable && (
           <p className="file-row__note">
             내용을 읽을 수 없어 미분류로 보냅니다. 저장은 됩니다.

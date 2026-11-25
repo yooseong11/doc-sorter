@@ -13,10 +13,10 @@ import './ResultRow.css'
 // 드롭다운 목록은 이 화면이 쓰는 프리셋에서 온다. 모듈 상수가 아니다. (ADR 0019)
 function ResultRow({ item, preset, onChangeCategory, onRetry, disabled }) {
   const { id, file, name, size } = item.source
-  const { phase, error, categoryId, quote } = item.classification
+  const { phase, error, categoryId, quote, ocr } = item.classification
   const failed = phase.endsWith('-failed')
   const status = failed ? 'failed' : phase
-  const needsReview = failed || categoryId === UNCLASSIFIED
+  const needsReview = failed || categoryId === UNCLASSIFIED || Boolean(ocr?.reviewWords || ocr?.failedPages.length)
   const [open, setOpen] = useState(needsReview)
   const [prevNeedsReview, setPrevNeedsReview] = useState(needsReview)
   if (needsReview !== prevNeedsReview) {
@@ -126,6 +126,13 @@ function ResultRow({ item, preset, onChangeCategory, onRetry, disabled }) {
             </p>
           )}
 
+          {ocr && (
+            <p className="result-row__note">
+              OCR 결과 저장 완료. 낮은 신뢰도 단어 {ocr.reviewWords}개는 JSON에서 검토할 수 있습니다.
+              {ocr.failedPages.length > 0 && ` 처리 실패: ${ocr.failedPages.join(', ')}페이지.`}
+              <br />결과 파일: outputs/{ocr.files.json}
+            </p>
+          )}
           {file && (
             <button
               type="button"

@@ -36,8 +36,8 @@ function UploadPage({ items, dispatch, categories, onCategoriesChange, classifyi
         title="문서 분류기"
         lead={
           <>
-            한꺼번에 받은 보고서를 카테고리별 폴더로 나눠 넣습니다. 파일은
-            브라우저 안에만 있고, 분류에 쓰는 앞부분 텍스트만 서버로 보냅니다.
+            한꺼번에 받은 보고서를 카테고리별 폴더로 나눠 넣습니다. PDF·이미지는
+            이 PC에서 텍스트를 읽고 결과를 저장합니다. 외부 분류에는 앞부분 텍스트만 보냅니다.
           </>
         }
       >

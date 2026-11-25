@@ -16,7 +16,8 @@ function ConfirmPage({ items: rows, dispatch, preset, busy, onRetry, onBack, onN
 
   const reviewCount = rows.filter(
     (row) => row.classification.phase.endsWith('-failed')
-      || row.classification.categoryId === UNCLASSIFIED,
+      || row.classification.categoryId === UNCLASSIFIED
+      || Boolean(row.classification.ocr?.reviewWords || row.classification.ocr?.failedPages.length),
   ).length
 
   const allUnclassified =

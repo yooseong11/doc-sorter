@@ -22,12 +22,12 @@ export async function prepareDocument(item, { dispatch, extract = extractText })
     const patch = { ...result, phase: CLASSIFICATION_PHASE.READY, error: null }
     updateClassification(dispatch, item, patch)
     return withClassification(item, patch)
-  } catch {
+  } catch (error) {
     const patch = {
       phase: CLASSIFICATION_PHASE.READ_FAILED,
       categoryId: UNCLASSIFIED,
       quote: '',
-      error: '파일을 읽지 못했습니다. 파일 손상 또는 암호 설정을 확인해 주세요.',
+      error: error?.name === 'ApiError' ? error.message : '파일을 읽지 못했습니다. 파일 손상 또는 암호 설정을 확인해 주세요.',
     }
     updateClassification(dispatch, item, patch)
     return withClassification(item, patch)
