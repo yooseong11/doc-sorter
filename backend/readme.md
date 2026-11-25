@@ -142,6 +142,22 @@ macOS 기본 폰트 경로를 사용하며 다른 환경은 `OCR_TEST_FONT`로 �
 폰트가 없으면 실제 텍스트 샘플 검증은 skip으로 표시한다.
 프론트 테스트는 Node 22 이상에서 `node --test tests/ocr.test.js`로 실행한다.
 
+### 분류 평가
+
+```sh
+cd backend
+.venv/bin/python -m evals.run                      # .env의 AI_PROVIDER
+AI_PROVIDER=ollama .venv/bin/python -m evals.run   # provider만 바꿔 비교
+```
+
+`evals/cases.json`의 문서 11개를 실제 provider로 분류해 정답률·미분류 비율·인용 통과율을 출력하고,
+문서별 결과를 `evals/results/`(git 제외)에 저장한다. 프롬프트나 provider를 바꾼 뒤 숫자를 비교하는 용도다.
+
+- 문서는 `frontend/sample/`의 가상 샘플이다. 텍스트는 미리 추출해 3000자로 잘라 고정했으므로 추출·OCR 차이 없이 분류만 잰다. 스캔본 2개는 로컬 OCR 결과를 그대로 넣었다.
+- `expected`는 허용 답 목록이다. 경계 문서는 답이 둘이고, 카테고리 밖이거나 앞 3000자에 단서가 없는 문서는 `미분류`다.
+- 인용 통과율은 모델이 낸 인용문 중 원문 검증(ADR 0018)을 통과한 비율이다. AI 오류는 오답으로 센다.
+- OpenAI로 실행하면 샘플 텍스트가 외부로 나가고 호출 비용이 든다.
+
 ### 2026-11-25 검증 결과
 
 - Python 3.12.10 / Tesseract 5.5.4, kor·eng·osd 설치 확인. `pip check` 통과.
