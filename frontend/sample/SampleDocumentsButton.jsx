@@ -1,13 +1,6 @@
 import { useState } from 'react'
-import Button from '../common/Button'
-import { SAMPLE_DOCUMENTS } from '../../sampleDocuments.js'
-
-async function fetchSample(sample) {
-  const response = await fetch(sample.url)
-  if (!response.ok) throw new Error(`샘플을 불러오지 못했습니다: ${sample.fileName}`)
-  const blob = await response.blob()
-  return new File([blob], sample.fileName, { type: blob.type })
-}
+import Button from '../src/components/common/Button'
+import { loadSampleDocuments } from './loadSampleDocuments.js'
 
 function SampleDocumentsButton({ disabled, onFiles }) {
   const [loading, setLoading] = useState(false)
@@ -18,7 +11,7 @@ function SampleDocumentsButton({ disabled, onFiles }) {
     setLoading(true)
     setFailed(false)
     try {
-      onFiles(await Promise.all(SAMPLE_DOCUMENTS.map(fetchSample)))
+      onFiles(await loadSampleDocuments())
     } catch {
       setFailed(true)
     } finally {

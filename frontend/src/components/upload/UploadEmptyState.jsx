@@ -1,5 +1,5 @@
 import Button from '../common/Button'
-import SampleDocumentsButton from './SampleDocumentsButton'
+import SampleDocumentsButton from '../../../sample/SampleDocumentsButton.jsx'
 import './UploadEmptyState.css'
 
 function UploadEmptyState({ canPick, classifying, onPick, onAddFiles }) {

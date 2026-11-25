@@ -62,7 +62,7 @@ S2의 판단이 흔들리는 상황을 하나씩 겨냥합니다.
 파일은 `make_samples.py`로 생성한다.
 
 ```bash
-cd 샘플문서
+cd frontend/sample/fixtures
 python3 make_samples.py
 ```
 
