@@ -4,7 +4,7 @@ from app.providers.base import BaseProvider
 
 
 def create_provider() -> BaseProvider:
-    provider_name = os.getenv('AI_PROVIDER', 'ollama').strip().lower()
+    provider_name = os.getenv('AI_PROVIDER', 'openai').strip().lower()
     if provider_name == 'ollama':
         from app.providers.ollama_provider import OllamaProvider
         return OllamaProvider()

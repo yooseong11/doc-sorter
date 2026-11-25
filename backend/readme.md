@@ -7,7 +7,7 @@ source .venv/bin/activate
 
 ### 서버 실행
 ```
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
 ## 로컬 OCR 실행
@@ -22,25 +22,29 @@ cd backend
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 python -m pip check
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000
+python -m uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
 프론트는 기존 Vite `/api` 프록시로 연결한다. 개발 중 다른 로컬 포트가 필요하면 프론트 실행 시 `DOC_SORTER_API_TARGET=http://127.0.0.1:8001 npm run dev`처럼 지정할 수 있다. PDF와 이미지 처리는 이 로컬 서버가 필요하다.
 외부 서버에 원본을 보내지 않도록 서버를 사용자 PC의 `127.0.0.1`에서 실행한다.
-`/api/classify`는 OpenAI로 분류하고 원문 근거 인용문을 반환한다. Ollama 선택 설정은 사용하지 않는다.
+`/api/classify`는 `AI_PROVIDER`로 고른 OpenAI 또는 Ollama로 분류하고 원문 근거 인용문을 반환한다.
 
-### OpenAI 분류 설정
+### AI 분류 설정
 
-`backend/.env.example`을 참고해 `backend/.env`에 `OPENAI_API_KEY`와 `OPENAI_MODEL`을 설정하고 서버를 재시작한다.
-모델은 Responses API와 Structured Outputs를 지원해야 한다. API 키는 프론트에 넣지 않는다.
-`pip install -r requirements.txt`로 OpenAI SDK도 설치한다.
+`backend/.env.example`을 참고해 `backend/.env`를 만들고 서버를 재시작한다. provider는 서버 시작 시 한 번 고른다.
+
+- `AI_PROVIDER=openai`(기본값): `OPENAI_API_KEY`, `OPENAI_MODEL`이 필요하다. 모델은 Responses API와 Structured Outputs를 지원해야 한다.
+- `AI_PROVIDER=ollama`: `OLLAMA_MODEL`이 필요하고 `OLLAMA_BASE_URL`(기본 `http://127.0.0.1:11434`)은 선택이다. 본문이 PC 밖으로 나가지 않는다. Ollama의 `format` JSON Schema 출력을 지원하는 버전을 쓴다.
+
+API 키는 프론트에 넣지 않는다. `pip install -r requirements.txt`로 OpenAI SDK도 설치한다.
+설정이 빠져도 서버는 떠서 OCR은 쓸 수 있고, 분류 요청만 503으로 안내한다. `GET /health`로 고른 provider와 모델을 확인할 수 있다.
 
 요청 JSON은 `{name, text, categories: [{name, hint}]}`이며 text는 최대 3000자다.
 응답은 `{category, quote}`로, quote는 요약이 아닌 120자 이내의 원문 인용이다.
 목록 밖 카테고리는 미분류로 보정하고 원문에 없는 인용문은 비운다.
-OpenAI 요청은 35초 제한·자동 재시도 없음이며 설정 누락 503, AI 오류 502, 시간 초과 504를 반환한다.
+AI 요청은 35초 제한·자동 재시도 없음이며 설정 누락 503, AI 오류 502, 시간 초과 504를 반환한다.
 실패한 문서는 기존 화면에서 재시도할 수 있다.
-호출은 [OpenAI Responses API](https://developers.openai.com/api/reference/resources/responses/methods/create)의 JSON Schema 출력을 사용한다.
+OpenAI 호출은 [OpenAI Responses API](https://developers.openai.com/api/reference/resources/responses/methods/create)의 JSON Schema 출력을 사용한다.
 
 ```sh
 curl -F 'file=@/absolute/path/document.pdf' http://127.0.0.1:8000/api/ocr

@@ -11,10 +11,7 @@ class OpenAIProvider(BaseProvider):
         super().__init__('openai', required_env('OPENAI_MODEL'))
         self._client = OpenAI(api_key=required_env('OPENAI_API_KEY'), timeout=35.0, max_retries=0)
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *args):
+    def close(self) -> None:
         self._client.close()
 
     def _generate(self, message: str, schema: dict | None) -> str:

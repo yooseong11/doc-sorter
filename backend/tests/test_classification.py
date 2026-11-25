@@ -1,21 +1,20 @@
 import json
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from fastapi.testclient import TestClient
 from app.config import ConfigError
-from app.main import app
+from app.main import create_app
+from app.providers.base import BaseProvider
 from app.providers.errors import ProviderTimeoutError, ProviderResponseError
 
 
 class ClassificationTests(unittest.TestCase):
     def setUp(self):
-        self.client = TestClient(app)
+        self.provider = Mock(spec=BaseProvider, provider_name='fake', model_name='fake-model')
+        self.client = TestClient(create_app(provider=self.provider))
         self.body = {'name': '휴가.txt', 'text': '연차 신청서\n신청합니다.',
                      'categories': [{'name': '근태', 'hint': ''}]}
-        self.mock = patch('app.services.classification_service.OpenAIProvider')
-        self.provider = self.mock.start().return_value.__enter__.return_value
-        self.addCleanup(self.mock.stop)
 
     def answer(self, value):
         self.provider.generate.return_value = json.dumps(value, ensure_ascii=False)
@@ -65,14 +64,33 @@ class ClassificationTests(unittest.TestCase):
             self.assertEqual(self.client.post('/api/classify', json=self.body).status_code, status)
 
     def test_missing_configuration(self):
-        with patch('app.services.classification_service.OpenAIProvider', side_effect=ConfigError('secret')):
-            response = self.client.post('/api/classify', json=self.body)
+        with patch('app.main.create_provider', side_effect=ConfigError('secret')):
+            client = TestClient(create_app())
+        response = client.post('/api/classify', json=self.body)
         self.assertEqual(response.status_code, 503)
         self.assertNotIn('secret', response.text)
+        self.assertIsNone(client.get('/health').json()['provider'])
+
+    def test_health_and_close_on_shutdown(self):
+        with TestClient(create_app(provider=self.provider)) as client:
+            self.assertEqual(client.get('/health').json(),
+                             {'status': 'ok', 'provider': 'fake', 'model': 'fake-model'})
+            self.provider.close.assert_not_called()
+        self.provider.close.assert_called_once()
+
+    def test_invalid_ollama_url_keeps_ocr_available(self):
+        for url in ('http://127.0.0.1:abc', '', 'localhost:11434', 'ftp://localhost'):
+            with self.subTest(url=url), patch.dict('os.environ', {
+                'AI_PROVIDER': 'ollama', 'OLLAMA_MODEL': 'test', 'OLLAMA_BASE_URL': url,
+            }), self.assertLogs('app.main', 'WARNING'), TestClient(create_app()) as client:
+                self.assertIsNone(client.get('/health').json()['provider'])
+                self.assertEqual(client.post('/api/classify', json=self.body).status_code, 503)
+                response = client.post('/api/ocr', files={'file': ('test.txt', b'test')})
+                self.assertEqual(response.status_code, 415)
 
     def test_unexpected_runtime_error_is_not_config_error(self):
         self.provider.generate.side_effect = RuntimeError('bug')
-        client = TestClient(app, raise_server_exceptions=False)
+        client = TestClient(create_app(provider=self.provider), raise_server_exceptions=False)
         self.assertEqual(client.post('/api/classify', json=self.body).status_code, 500)
 
 
@@ -119,3 +137,51 @@ class OpenAIProviderTests(unittest.TestCase):
                     provider.generate('문서')
         self.assertIn('OpenAI HTTP 401', logs.output[0])
         self.assertIn('AuthenticationError', logs.output[0])
+
+
+class FactoryTests(unittest.TestCase):
+    def test_selects_provider_by_env(self):
+        from app.providers.factory import create_provider
+        env = {'OPENAI_API_KEY': 'test-key', 'OPENAI_MODEL': 'gpt-test', 'OLLAMA_MODEL': 'llama-test'}
+        for name, expected in (('ollama', 'ollama'), ('openai', 'openai'), (' OpenAI ', 'openai')):
+            with self.subTest(name=name), patch.dict('os.environ', env | {'AI_PROVIDER': name}), patch('openai.OpenAI'):
+                with create_provider() as provider:
+                    self.assertEqual(provider.provider_name, expected)
+
+    def test_defaults_to_openai_and_rejects_unknown(self):
+        from app.providers.factory import create_provider
+        with patch.dict('os.environ', {'OPENAI_API_KEY': 'k', 'OPENAI_MODEL': 'm'}), patch('openai.OpenAI'):
+            import os
+            os.environ.pop('AI_PROVIDER', None)
+            self.assertEqual(create_provider().provider_name, 'openai')
+        with patch.dict('os.environ', {'AI_PROVIDER': 'gemini'}), self.assertRaises(ConfigError):
+            create_provider()
+
+
+class OllamaProviderTests(unittest.TestCase):
+    def setUp(self):
+        from app.providers.ollama_provider import OllamaProvider
+        with patch.dict('os.environ', {'OLLAMA_MODEL': 'llama-test'}), patch('httpx.Client') as client:
+            self.provider = OllamaProvider()
+        self.http = client.return_value
+        client.assert_called_once_with(base_url='http://127.0.0.1:11434', timeout=35.0)
+
+    def test_schema_goes_to_format_and_close(self):
+        self.http.post.return_value.json.return_value = {'message': {'content': '{"category":"근태","quote":""}'}}
+        schema = {'type': 'object'}
+        self.assertIn('근태', self.provider.generate('문서', schema))
+        body = self.http.post.call_args.kwargs['json']
+        self.assertIs(body['format'], schema)
+        self.assertEqual(body['model'], 'llama-test')
+        self.provider.close()
+        self.http.close.assert_called_once()
+
+    def test_status_error_keeps_status(self):
+        import httpx
+        from app.providers.errors import ProviderUpstreamError
+        request = httpx.Request('POST', 'http://127.0.0.1:11434/api/chat')
+        self.http.post.return_value.raise_for_status.side_effect = httpx.HTTPStatusError(
+            'missing model', request=request, response=httpx.Response(404, request=request))
+        with self.assertLogs('app.providers.base', 'ERROR') as logs, self.assertRaises(ProviderUpstreamError):
+            self.provider.generate('문서')
+        self.assertIn('Ollama HTTP 404', logs.output[0])

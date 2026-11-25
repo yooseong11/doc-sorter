@@ -1,13 +1,10 @@
-"""분류 계약 검증과 OpenAI 연결. 원본 파일은 전송하지 않는다."""
+"""분류 계약 검증과 AI provider 호출. 원본 파일은 전송하지 않는다."""
 import json
 import unicodedata
 
-from app.schemas import ClassificationInput, ClassificationResult
-
-from app.providers.openai_provider import OpenAIProvider
+from app.providers.base import BaseProvider
 from app.providers.errors import ProviderResponseError
-
-
+from app.schemas import ClassificationInput, ClassificationResult
 
 UNCLASSIFIED = '미분류'
 
@@ -29,7 +26,7 @@ def result_schema(data: ClassificationInput) -> dict:
     }
 
 
-def classify_document(data: ClassificationInput) -> ClassificationResult:
+def classify_document(data: ClassificationInput, provider: BaseProvider) -> ClassificationResult:
     prompt = (
         '문서를 주어진 카테고리 중 하나로 분류하세요. 확신이 없으면 미분류를 선택하세요. '
         'quote는 문서 text에서 분류 근거가 된 문장을 그대로 120자 이내로 인용하세요. '
@@ -38,8 +35,7 @@ def classify_document(data: ClassificationInput) -> ClassificationResult:
         'category와 quote만 포함하는 JSON 객체를 반환하세요.\n'
         + json.dumps(data.model_dump(), ensure_ascii=False)
     )
-    with OpenAIProvider() as provider:
-        answer = provider.generate(prompt, result_schema(data))
+    answer = provider.generate(prompt, result_schema(data))
     try:
         result = json.loads(answer)
     except (ValueError, TypeError) as exc:

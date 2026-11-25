@@ -18,6 +18,15 @@ class BaseProvider:
     def model_name(self) -> str:
         return self._model
 
+    def close(self) -> None:
+        """앱 종료 시 한 번 부른다. 연결을 붙잡는 provider만 덮어쓴다."""
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args) -> None:
+        self.close()
+
     def _generate(self, message: str, schema: dict | None) -> str:
         raise NotImplementedError
 

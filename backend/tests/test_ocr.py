@@ -16,7 +16,8 @@ from fastapi.testclient import TestClient
 
 from app.config import OcrSettings
 from app.services.image_service import preprocess, rotate_expanded, estimate_skew
-from app.main import app
+from app.main import create_app
+from app.providers.base import BaseProvider
 from app.ocr_errors import OcrError
 from app.services.ocr_service import words_from_data, reconstruct_text, check_engine, recognize
 from app.ocr_worker import process_content
@@ -200,7 +201,7 @@ class OcrTests(unittest.TestCase):
         self.assertEqual(list(self.settings.outputs_dir.iterdir()), [])
 
     def test_api_save_utf8_safe_paths_repeated(self):
-        with patch('app.main.OcrSettings', return_value=self.settings), TestClient(app) as client:
+        with patch('app.main.OcrSettings', return_value=self.settings), TestClient(create_app(provider=BaseProvider('test', 'test'))) as client:
             response = client.post('/api/ocr', files={'file': ('../../문서.pdf', make_pdf(), 'application/pdf')})
             self.assertEqual(response.status_code, 200, response.text)
             data = response.json()
