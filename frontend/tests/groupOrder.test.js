@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict'
 import { UNCLASSIFIED, categoryPreset } from '../shared/categories.js';
+import { groupOrderOf } from '../src/groupOrder.js';
 
 test('미분류 묶음이 맨 위에 온다', () => {
     const list = groupOrderOf(categoryPreset());
