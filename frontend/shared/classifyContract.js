@@ -41,7 +41,8 @@ export const inputSchema = v.strictObject({
 // 카테고리가 요청마다 달라지므로 스키마도 요청마다 만든다. 모듈 로드 시점에 굳히지 않는다. (ADR 0019)
 // 인용문은 스키마 검증에서 빼고 따로 다듬는다. 값이 이상해도 카테고리는 살아남는다. (ADR 0015)
 function resultSchemaOf(options) {
-  return v.strictObject({ category: v.picklist(options), quote: v.optional(v.unknown()) })
+  // flagged는 서버가 분류 조작 지시를 탐지했다는 표시다. 화면 표시는 아직 없다. (ADR 0027)
+  return v.strictObject({ category: v.picklist(options), quote: v.optional(v.unknown()), flagged: v.optional(v.boolean()) })
 }
 
 export function toQuote(value) {

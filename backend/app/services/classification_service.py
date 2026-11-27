@@ -5,6 +5,7 @@ import unicodedata
 from app.providers.base import BaseProvider
 from app.providers.errors import ProviderResponseError
 from app.schemas import ClassificationInput, ClassificationResult
+from app.services.injection_guard import has_classification_instruction
 
 UNCLASSIFIED = '미분류'
 
@@ -26,7 +27,12 @@ def result_schema(data: ClassificationInput) -> dict:
     }
 
 
-def classify_document(data: ClassificationInput, provider: BaseProvider) -> ClassificationResult:
+def classify_document(data: ClassificationInput, provider: BaseProvider, guard: bool = True) -> ClassificationResult:
+    """guard=False는 평가에서 모델의 인젝션 내성만 잴 때 쓴다."""
+    # 인용의 원문 일치(0018)는 지시 추종을 검증하지 않는다. 탐지 시 flagged로 알리고 사람이 확인한다(0027).
+    names = [item.name for item in data.categories]
+    if guard and any(has_classification_instruction(value, names) for value in (data.name, data.text)):
+        return ClassificationResult(category=UNCLASSIFIED, quote='', flagged=True)
     prompt = (
         '문서를 주어진 카테고리 중 하나로 분류하세요. 확신이 없으면 미분류를 선택하세요. '
         'quote는 문서 text에서 분류 근거가 된 문장을 그대로 120자 이내로 인용하세요. '

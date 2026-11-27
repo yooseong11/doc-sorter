@@ -35,6 +35,8 @@ test('잘못된 응답과 없는 카테고리는 미분류가 된다', () => {
     assert.equal(normalizeClassification(value, '', preset).category, '미분류')
   }
   assert.equal(normalizeClassification({ category: '계약서' }, '', preset).category, '계약서')
+  // 서버의 탐지 표시가 붙어도 응답을 버리지 않는다. (ADR 0027)
+  assert.equal(normalizeClassification({ category: '계약서', quote: '', flagged: false }, '', preset).category, '계약서')
 })
 test('인용문은 상한까지 자르고 값이 이상하면 카테고리만 살린다', () => {
   assert.equal(normalizeClassification({ category: '계약서', quote: '가'.repeat(300) }, '가'.repeat(300), preset).quote.length, MAX_QUOTE_CHARS)

@@ -80,3 +80,5 @@ class ClassificationResult(BaseModel):
     model_config = ConfigDict(extra='forbid')
     category: str
     quote: str
+    # 분류 조작 지시를 탐지해 AI 호출 없이 미분류로 보냈는지. 모델이 고른 미분류와 구분한다. (ADR 0027)
+    flagged: bool = False
